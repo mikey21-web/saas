@@ -47,13 +47,12 @@ export async function createAgent(userId: string, agentData: any): Promise<any> 
 }
 
 export async function updateAgent(userId: string, agentId: string, updates: any): Promise<any> {
-  const { data, error } = await (supabase
-    .from('agents' as any)
-    .update(updates as any)
+  const { data, error } = await ((supabase.from('agents') as any)
+    .update(updates)
     .eq('user_id', userId)
     .eq('id', agentId)
     .select()
-    .single() as any)
+    .single())
   if (error) throw error
   return data
 }
@@ -141,20 +140,19 @@ export async function updateAgentUsage(agentId: string, channel: 'whatsapp' | 'e
   const field = fieldMap[channel]
 
   // Increment usage counter
-  const { error } = await (supabase.rpc('increment_agent_usage', {
+  const { error } = await ((supabase.rpc as any)('increment_agent_usage', {
     agent_id: agentId,
     field_name: field,
     increment_value: 1,
-  }) as any)
+  }))
 
   if (error) throw error
 }
 
 // Template: Activity logging
 export async function logActivity(userId: string, action: string, agentId?: string, details?: any): Promise<void> {
-  const { error } = await (supabase
-    .from('activity_logs' as any)
-    .insert([{ user_id: userId, agent_id: agentId, action, details: details ? JSON.stringify(details) : null }] as any)
-    as any)
+  const { error } = await ((supabase
+    .from('activity_logs') as any)
+    .insert([{ user_id: userId, agent_id: agentId, action, details: details ? JSON.stringify(details) : null }]))
   if (error) console.error('Failed to log activity:', error)
 }
