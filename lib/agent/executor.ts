@@ -20,8 +20,8 @@ import type { SafetyConfig, SafetyState } from '@/lib/agent/safety'
 import { executeSkill } from '@/lib/skills/runner'
 import { allSkills } from '@/lib/skills/registry'
 import type { AgentContext } from '@/lib/skills/types'
-// Supabase queries - will be imported when Supabase is configured
-// import { getAgent, getConversationHistory, addMessage, updateAgentUsage, logActivity } from '@/lib/supabase/queries'
+import { getAgent, getConversationHistory, addMessage } from '@/lib/supabase/queries'
+// TODO: Wire updateAgentUsage and logActivity in Phase 10 for usage metering and audit logs
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,23 +58,43 @@ export interface ExecutionResult {
 }
 
 // ─── Agent Config Loader ────────
-// TODO: Replace this with Supabase query when configured
-// import { getAgent } from '@/lib/supabase/queries'
 
 async function loadAgentConfig(agentId: string, userId: string): Promise<AgentConfig> {
-  // Fallback config (replace with Supabase query when configured)
-  return {
-    id: agentId,
-    userId,
-    name: 'AI Assistant',
-    businessName: 'Business',
-    industry: 'General',
-    products: [],
-    knowledgeBase: '',
-    tone: 'professional',
-    activeHours: { start: 9, end: 21 },
-    channels: ['whatsapp', 'email'],
-    modelTier: 'free',
+  try {
+    const agent = await getAgent(userId, agentId)
+    if (!agent) throw new Error('Agent not found')
+
+    return {
+      id: agent.id,
+      userId: agent.user_id,
+      name: agent.name || 'AI Assistant',
+      businessName: agent.business_name || 'Business',
+      industry: agent.business_industry || 'General',
+      products: [],
+      knowledgeBase: agent.system_prompt || '',
+      tone: agent.tone || 'professional',
+      activeHours: { start: 9, end: 21 },
+      channels: (agent.channels_whatsapp ? ['whatsapp'] : [])
+        .concat(agent.channels_email ? ['email'] : [])
+        .concat(agent.channels_sms ? ['sms'] : [])
+        .concat(agent.channels_phone ? ['phone'] : []),
+      modelTier: agent.ai_model_tier || 'free',
+    }
+  } catch (error) {
+    console.error('Failed to load agent config, using fallback:', error)
+    return {
+      id: agentId,
+      userId,
+      name: 'AI Assistant',
+      businessName: 'Business',
+      industry: 'General',
+      products: [],
+      knowledgeBase: '',
+      tone: 'professional',
+      activeHours: { start: 9, end: 21 },
+      channels: ['whatsapp', 'email'],
+      modelTier: 'free',
+    }
   }
 }
 
@@ -89,31 +109,46 @@ async function loadRAGContext(_agentId: string, _query: string): Promise<string>
 }
 
 // ─── Conversation History Loader ──────────────────────────
-// TODO: Replace with Supabase query when configured
-// import { getConversationHistory } from '@/lib/supabase/queries'
 
 async function loadConversationHistory(
-  _conversationId: string,
-  _limit: number = 10
+  conversationId: string,
+  limit: number = 10
 ): Promise<ConversationMessage[]> {
-  // Will load from pgvector when Supabase is configured
-  return []
+  try {
+    const messages = await getConversationHistory(conversationId, limit)
+    return messages.map((msg) => ({
+      role: msg.role === 'agent' ? 'assistant' : 'user',
+      content: msg.content,
+      timestamp: msg.created_at || new Date().toISOString(),
+    }))
+  } catch (error) {
+    console.error('Failed to load conversation history:', error)
+    return []
+  }
 }
 
 // ─── Save Message ─────────────────────────────────────────────────────
-// TODO: Replace with Supabase when configured
-// import { addMessage } from '@/lib/supabase/queries'
 
 async function saveMessage(
-  _conversationId: string,
-  _role: 'user' | 'assistant',
-  _content: string,
-  _agentId?: string,
-  _toolName?: string,
-  _toolResult?: string
+  conversationId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  agentId?: string,
+  toolName?: string,
+  toolResult?: string
 ): Promise<void> {
-  // Will persist to Supabase when configured
-  // Currently logs to console only
+  try {
+    await addMessage({
+      conversation_id: conversationId,
+      role: role === 'assistant' ? 'agent' : 'user',
+      content,
+      agent_id: agentId,
+      tool_name: toolName,
+      tool_result: toolResult,
+    })
+  } catch (error) {
+    console.error('Failed to save message:', error)
+  }
 }
 
 // ─── Send via Channel ────────────────────────────────────────────────────
