@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs'
 
+// Use Node.js runtime (Clerk uses MessageChannel which isn't supported in Edge Runtime)
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = auth()

@@ -15,6 +15,9 @@ import { executeAgent } from '@/lib/agent/executor'
 import type { ExecutionTrigger } from '@/lib/agent/executor'
 import { queueAgentJob } from '@/lib/queue/producer'
 
+// Use Node.js runtime (Clerk uses MessageChannel which isn't supported in Edge Runtime)
+export const runtime = 'nodejs'
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ChatRequestBody {
