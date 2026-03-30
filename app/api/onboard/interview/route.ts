@@ -28,20 +28,17 @@ function buildSystemPrompt(agentType: string): string {
 ## Your Interview Goal
 Ask 5-6 focused questions to understand the business so you can configure the agent perfectly. Be conversational, warm, and concise — like a helpful consultant on WhatsApp.
 
-## Question Flow for ${agentType}
+## Question Flow for ${agentType} (max 4 questions)
 1. Business name + what they sell/do
 2. Who are their main customers
-3. Biggest pain point this agent should solve
-4. Preferred communication style (formal/friendly/Hinglish)
-5. Working hours / when the agent should be active
-6. Any specific instructions or things to avoid (optional)
+3. Preferred tone (formal/friendly/Hinglish) + working hours
+4. Any special instructions (optional — if they say "no" or "nothing", proceed to config)
 
 ## Rules
 - Ask ONE question at a time
-- Keep each message under 3 sentences
-- Use simple, clear English (Indian business owners)
-- Add light emojis where natural
-- After 5-6 exchanges when you have enough info, output the config block EXACTLY as shown below
+- Keep each message under 2 sentences MAX — be concise
+- Use simple English (Indian business owners)
+- After 4 exchanges when you have enough info, output the config block EXACTLY as shown below
 
 ## When Interview is Complete
 Output this EXACT format (JSON block at the end of your message):
@@ -62,7 +59,7 @@ Output this EXACT format (JSON block at the end of your message):
 }
 \`\`\`"
 
-DO NOT output the config block until you have asked at least 4 questions and received answers.`
+Output the config block after 3-4 exchanges. Do not over-ask.`
 }
 
 export async function POST(req: NextRequest) {
@@ -89,35 +86,19 @@ export async function POST(req: NextRequest) {
     )
   ]
 
-  // If messages is empty, stream the opening message
+  // If messages is empty, return opening message instantly (no fake delay)
   if (messages.length === 0) {
-    const openingMsg = `Hi! I'm going to ask you a few quick questions to set up your **${agentType}** agent perfectly for your business. It'll only take 2 minutes! 😊\n\nFirst — what's your business name and what do you sell or offer?`
-
+    const openingMsg = `Hi! Quick setup for your **${agentType}** agent — just 4 questions 😊\n\nWhat's your business name and what do you sell?`
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       start(controller) {
-        // Simulate streaming word by word
-        const words = openingMsg.split(' ')
-        let i = 0
-        const interval = setInterval(() => {
-          if (i < words.length) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: words[i] + ' ' })}\n\n`))
-            i++
-          } else {
-            controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
-            controller.close()
-            clearInterval(interval)
-          }
-        }, 30)
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: openingMsg })}\n\n`))
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+        controller.close()
       }
     })
-
     return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      }
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }
     })
   }
 
@@ -131,11 +112,11 @@ export async function POST(req: NextRequest) {
       endpoint = 'https://api.groq.com/openai/v1/chat/completions'
       authHeader = `Bearer ${apiKey}`
       body = {
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: aiMessages,
         stream: true,
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: 0.6,
+        max_tokens: 180,
       }
     } else {
       endpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
@@ -144,8 +125,8 @@ export async function POST(req: NextRequest) {
         model: 'gemini-2.0-flash',
         messages: aiMessages,
         stream: true,
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: 0.6,
+        max_tokens: 180,
       }
     }
 
