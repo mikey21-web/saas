@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
-import { Search } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Zap, Sparkles } from 'lucide-react'
+
 
 const agents = [
   {
@@ -162,6 +163,22 @@ const categories = ['All', ...new Set(agents.map(a => a.category))]
 export default function AgentStorePage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [deployingId, setDeployingId] = useState<number | null>(null)
+  const router = useRouter()
+
+  const handleSmartDeploy = (agent: typeof agents[0]) => {
+    router.push(
+      `/onboard/${encodeURIComponent(agent.name)}?name=${encodeURIComponent(agent.name)}&icon=${encodeURIComponent(agent.icon)}&plan=agent`
+    )
+  }
+
+  const handleQuickDeploy = async (agent: typeof agents[0]) => {
+    setDeployingId(agent.id)
+    // Quick deploy: go straight to payment via onboard page with plan pre-selected
+    router.push(
+      `/onboard/${encodeURIComponent(agent.name)}?name=${encodeURIComponent(agent.name)}&icon=${encodeURIComponent(agent.icon)}&plan=agent&quick=1`
+    )
+  }
 
   const filteredAgents = useMemo(() => {
     return agents.filter(agent => {
@@ -260,13 +277,27 @@ export default function AgentStorePage() {
               {/* Target */}
               <p className="text-xs text-gray-500 mb-4 italic">For: {agent.targetBusiness}</p>
 
-              {/* Deploy Button */}
-              <Link
-                href="/create-agent"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium text-sm text-center transition-colors"
-              >
-                Deploy Agent
-              </Link>
+              {/* Two Deploy Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleQuickDeploy(agent)}
+                  disabled={deployingId === agent.id}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-1"
+                  title="Deploy with default settings"
+                >
+                  <Zap className="w-3 h-3" />
+                  1-Click Deploy
+                </button>
+                <button
+                  onClick={() => handleSmartDeploy(agent)}
+                  className="flex-1 bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-1"
+                  title="Customize for your business with AI interview"
+                >
+                  <Sparkles className="w-3 h-3 text-purple-500" />
+                  Smart Deploy
+                </button>
+              </div>
+              <p className="text-center text-xs text-gray-400 mt-1">Smart Deploy = AI customizes for your business</p>
             </div>
           ))}
         </div>
@@ -290,12 +321,12 @@ export default function AgentStorePage() {
         <p className="text-sm text-gray-700 mb-2">
           <strong>Want a custom agent?</strong>
         </p>
-        <Link
-          href="/create-agent"
+        <button
+          onClick={() => router.push('/create-agent')}
           className="text-blue-600 hover:text-blue-700 font-medium"
         >
           Build your own agent from scratch →
-        </Link>
+        </button>
       </div>
     </div>
   )
