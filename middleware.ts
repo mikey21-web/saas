@@ -1,17 +1,11 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { NextResponse } from 'next/server'
 
-export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/sign-in",
-    "/sign-up",
-    "/sign-in/[[...index]]",
-    "/sign-up/[[...index]]",
-    "/auth/callback",
-    "/(landing)(.*)",
-  ],
-});
+// Temporary middleware — Clerk keys not yet configured
+// Routes through without auth checks until keys are added
+export function middleware() {
+  return NextResponse.next()
+}
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
-};
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)'],
+}
