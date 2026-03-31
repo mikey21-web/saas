@@ -7,6 +7,10 @@ export default authMiddleware({
     '/sign-in(.*)',
     '/sign-up(.*)',
     '/api/webhooks/(.*)',
+    '/api/test-driven-development(.*)',
+    '/api/webapp-testing(.*)',
+    '/test-driven-development(.*)',
+    '/webapp-testing(.*)',
   ],
 })
 
