@@ -34,13 +34,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen" style={{ background: '#0c0c0d' }}>
       {/* Sidebar */}
-      <div className="w-64 border-r border-gray-200 bg-white flex flex-col">
+      <div className="w-64 border-r flex flex-col" style={{ borderColor: 'rgba(255,255,255,0.08)', background: '#0c0c0d' }}>
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-brand-600">diyaa.ai</div>
+            <div className="text-2xl font-bold" style={{ color: '#e879f9' }}>diyaa.ai</div>
           </Link>
         </div>
 
@@ -53,11 +53,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-brand-50 text-brand-600 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors font-medium`}
+                    style={{
+                      background: isActive ? 'rgba(232,121,249,0.15)' : 'transparent',
+                      color: isActive ? '#e879f9' : '#71717a'
+                    }}
                   >
                     <span className="text-lg">{item.icon}</span>
                     <span className="text-sm">{item.name}</span>
@@ -69,9 +69,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between p-2">
-            <span className="text-xs font-medium text-gray-600">Account</span>
+            <span className="text-xs font-medium" style={{ color: '#71717a' }}>Account</span>
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
@@ -80,18 +80,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-gray-200 bg-white px-6 py-4">
+        <header className="border-b px-6 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(22,22,24,0.4)', backdropFilter: 'blur(10px)' }}>
           <div className="flex items-center justify-between">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
+              <Link href="/" style={{ color: '#71717a' }} className="hover:text-gray-300 transition">
                 Dashboard
               </Link>
-              {breadcrumbs.length > 0 && <span className="text-gray-400">/</span>}
+              {breadcrumbs.length > 0 && <span style={{ color: '#71717a' }}>/</span>}
               {breadcrumbs.map((crumb, index) => (
                 <div key={crumb.href} className="flex items-center gap-2">
-                  {index > 0 && <span className="text-gray-400">/</span>}
-                  <Link href={crumb.href} className="text-gray-600 hover:text-gray-900">
+                  {index > 0 && <span style={{ color: '#71717a' }}>/</span>}
+                  <Link href={crumb.href} style={{ color: '#71717a' }} className="hover:text-gray-300 transition">
                     {crumb.name}
                   </Link>
                 </div>
@@ -99,7 +99,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Kill Switch */}
-            <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium text-sm flex items-center gap-2">
+            <button className="px-4 py-2 rounded-lg hover:opacity-90 font-medium text-sm flex items-center gap-2 transition" style={{ background: '#dc2626', color: '#fff' }}>
               <span>⏸</span>
               Pause All
             </button>
@@ -107,7 +107,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-gray-50">
+        <main className="flex-1 overflow-auto" style={{ background: '#0c0c0d' }}>
           <div className="p-6">{children}</div>
         </main>
       </div>
