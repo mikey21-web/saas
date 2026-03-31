@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { ArrowRight, Zap } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -46,7 +47,6 @@ export default function DashboardHome() {
         if (error) throw error;
         setAgents(data || []);
 
-        // Calculate stats
         const activeCount = (data || []).filter((a: Agent) => a.status === "active").length;
         const totalMessages = (data || []).reduce((sum: number, a: Agent) => sum + a.monthly_calls_used + a.monthly_emails_used + a.monthly_whatsapp_used, 0);
 
@@ -66,127 +66,136 @@ export default function DashboardHome() {
   }, [user]);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome, {user?.firstName || "Agent Master"}! 👋
-        </h1>
-        <p className="text-gray-600">Manage your AI employees from one place</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-2">
+            {user?.firstName || "Welcome"}
+          </h1>
+          <p className="text-gray-400 text-lg">Your AI workforce, automated and working 24/7</p>
+        </div>
+        <Link
+          href="/store"
+          className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm transition-all"
+          style={{ background: '#e879f9', color: '#0c0c0d' }}
+        >
+          <Zap className="w-4 h-4" />
+          Hire Agent
+        </Link>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="text-gray-600 text-sm font-medium mb-2">Active Agents</div>
-          <div className="text-3xl font-bold text-gray-900">{stats.activeCount}</div>
-          <p className="text-xs text-gray-500 mt-2">{agents.length} total deployed</p>
-        </div>
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="text-gray-600 text-sm font-medium mb-2">Total Messages</div>
-          <div className="text-3xl font-bold text-gray-900">{stats.todayMessages}</div>
-          <p className="text-xs text-gray-500 mt-2">This month across all agents</p>
-        </div>
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="text-gray-600 text-sm font-medium mb-2">Usage</div>
-          <div className="text-3xl font-bold text-blue-600">{Math.round(stats.totalUsagePercent)}%</div>
-          <p className="text-xs text-gray-500 mt-2">Of monthly capacity</p>
-        </div>
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="text-gray-600 text-sm font-medium mb-2">Trial Status</div>
-          <div className="text-lg font-bold text-blue-600">Active</div>
-          <p className="text-xs text-gray-500 mt-2">7 days free remaining</p>
-        </div>
+      {/* Stats Grid - Premium Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Active Agents', value: stats.activeCount, unit: `of ${agents.length} deployed` },
+          { label: 'Total Messages', value: stats.todayMessages, unit: 'this month' },
+          { label: 'Usage', value: `${Math.round(stats.totalUsagePercent)}%`, unit: 'monthly capacity' },
+          { label: 'Trial Status', value: 'Active', unit: '7 days remaining' },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="rounded-2xl p-6 border transition-all"
+            style={{
+              borderColor: 'rgba(255,255,255,0.1)',
+              background: i === 1 ? 'rgba(232,121,249,0.08)' : 'rgba(255,255,255,0.02)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-[0.2em] mb-4 opacity-60 font-medium">{stat.label}</p>
+            <p className="text-4xl font-bold mb-2" style={i === 1 ? { color: '#e879f9' } : {}}>{stat.value}</p>
+            <p className="text-sm text-gray-400">{stat.unit}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Agents Grid or Empty State */}
+      {/* Agents Section */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-4 border-transparent border-t-[#e879f9] rounded-full animate-spin" />
         </div>
       ) : agents.length > 0 ? (
         <div>
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Your Agents</h2>
-            <Link
-              href="/store"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
-            >
-              + Hire New Agent
-            </Link>
-          </div>
+          <h2 className="text-2xl font-bold tracking-tight mb-6">Your Agents</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {agents.map((agent) => (
-              <Link
-                key={agent.id}
-                href={`/agents/${agent.id}`}
-                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg hover:border-blue-300 transition-all group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="text-4xl mb-2">{agent.icon || "🤖"}</div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {agent.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">{agent.business_name}</p>
-                  </div>
-                  <div className={`w-3 h-3 rounded-full ${agent.status === "active" ? "bg-green-500" : "bg-gray-400"}`} />
-                </div>
+            {agents.map((agent) => {
+              const totalUsed = agent.monthly_calls_used + agent.monthly_emails_used + agent.monthly_whatsapp_used;
+              const totalLimit = agent.monthly_calls_limit + agent.monthly_emails_limit + agent.monthly_whatsapp_limit;
+              const usagePercent = Math.round((totalUsed / totalLimit) * 100);
 
-                <p className="text-xs text-gray-500 mb-4">{agent.industry}</p>
-
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-600">Calls/Email/WhatsApp</span>
-                      <span className="text-gray-500">
-                        {agent.monthly_calls_used + agent.monthly_emails_used + agent.monthly_whatsapp_used} msgs
-                      </span>
+              return (
+                <Link
+                  key={agent.id}
+                  href={`/agents/${agent.id}`}
+                  className="group rounded-2xl p-6 border transition-all hover:border-opacity-100"
+                  style={{
+                    borderColor: agent.status === 'active' ? 'rgba(232,121,249,0.5)' : 'rgba(255,255,255,0.1)',
+                    background: agent.status === 'active' ? 'rgba(232,121,249,0.06)' : 'rgba(255,255,255,0.02)',
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="text-3xl mb-2">{agent.icon || '🤖'}</div>
+                      <h3 className="text-lg font-bold">{agent.name}</h3>
+                      <p className="text-sm text-gray-400">{agent.business_name}</p>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-2">
                       <div
-                        className="h-full bg-blue-600 rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(
-                            ((agent.monthly_calls_used + agent.monthly_emails_used + agent.monthly_whatsapp_used) /
-                              (agent.monthly_calls_limit + agent.monthly_emails_limit + agent.monthly_whatsapp_limit)) *
-                              100,
-                            100
-                          )}%`,
-                        }}
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: agent.status === 'active' ? '#10b981' : '#6b7280' }}
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <span className={`text-xs font-medium ${agent.status === "active" ? "text-green-600" : "text-gray-500"}`}>
-                    {agent.status === "active" ? "✓ Active" : "⊘ Paused"}
-                  </span>
-                  <span className="text-xs text-blue-600 font-medium group-hover:underline">View →</span>
-                </div>
-              </Link>
-            ))}
+                  <p className="text-xs text-gray-500 mb-4 uppercase tracking-wide">{agent.industry}</p>
+
+                  <div className="space-y-2 mb-6">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Usage</span>
+                      <span className="font-medium" style={{ color: '#e879f9' }}>{usagePercent}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full transition-all rounded-full"
+                        style={{ background: '#e879f9', width: `${usagePercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                    <span className="text-xs font-medium" style={{ color: agent.status === 'active' ? '#10b981' : '#9ca3af' }}>
+                      {agent.status === 'active' ? '● Active' : '○ Paused'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-gray-300 transition-colors" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-          <div className="text-6xl mb-4">🤖</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Agents Yet</h2>
-          <p className="text-gray-600 mb-6">
-            Create your first AI employee from our agent store or build one from scratch
+        <div
+          className="rounded-2xl p-16 text-center border-2 border-dashed"
+          style={{ borderColor: 'rgba(232,121,249,0.3)', background: 'rgba(232,121,249,0.03)' }}
+        >
+          <p className="text-5xl mb-4">🤖</p>
+          <h2 className="text-2xl font-bold tracking-tight mb-2">No Agents Yet</h2>
+          <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+            Your AI workforce is one click away. Choose from our pre-built agents or create a custom one.
           </p>
           <div className="flex gap-4 justify-center">
             <Link
               href="/store"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              className="px-6 py-3 rounded-lg font-medium text-sm transition-all"
+              style={{ background: '#e879f9', color: '#0c0c0d' }}
             >
               Browse Agent Store
             </Link>
             <Link
               href="/create-agent"
-              className="px-6 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              className="px-6 py-3 rounded-lg font-medium text-sm transition-all border"
+              style={{ borderColor: 'rgba(232,121,249,0.3)', color: 'inherit' }}
             >
-              Create Custom Agent
+              Build Custom
             </Link>
           </div>
         </div>
