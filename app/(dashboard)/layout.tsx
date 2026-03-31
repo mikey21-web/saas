@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -21,6 +21,12 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [isPaused, setIsPaused] = useState(false);
+
+  const handlePauseAll = async () => {
+    setIsPaused(!isPaused);
+    // TODO: Call API to pause/resume all agents
+  };
 
   const getBreadcrumbs = () => {
     const parts = pathname.split("/").filter(Boolean);
@@ -99,9 +105,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Kill Switch */}
-            <button className="px-4 py-2 rounded-lg hover:opacity-90 font-medium text-sm flex items-center gap-2 transition" style={{ background: '#dc2626', color: '#fff' }}>
-              <span>⏸</span>
-              Pause All
+            <button onClick={handlePauseAll} className="px-4 py-2 rounded-lg hover:opacity-90 font-medium text-sm flex items-center gap-2 transition" style={{ background: '#dc2626', color: '#fff' }}>
+              <span>{isPaused ? '▶' : '⏸'}</span>
+              {isPaused ? 'Resume All' : 'Pause All'}
             </button>
           </div>
         </header>
