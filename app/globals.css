@@ -8,6 +8,12 @@
     --foreground: 0 0% 98%;
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-[#0A0A0B] text-white font-sans antialiased;
     /* Basic star/particle backdrop using a subtle radial gradient */
@@ -15,6 +21,12 @@
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  * {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 }
 

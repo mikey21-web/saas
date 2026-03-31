@@ -23,3 +23,6 @@ const config: Config = {
   plugins: [],
 }
 export default config
+
+/* Performance optimizations */
+export const preload = true
