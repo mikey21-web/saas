@@ -275,8 +275,9 @@ export default function OnboardPage() {
           agentIcon,
           config: agentConfig,
           userId: user.id,
-          plan: selectedPlan,
+          plan: 'agent', // Free trial = Agent tier for 7 days
           paymentId,
+          isFreeTrialat: true, // Skip payment requirement for free trial
         }),
       })
 
@@ -284,7 +285,7 @@ export default function OnboardPage() {
 
       if (data.success && data.agentId) {
         router.push(
-          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName || 'Agent')}&icon=${encodeURIComponent(agentIcon)}`
+          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName || 'Agent')}&icon=${encodeURIComponent(agentIcon)}&trial=1`
         )
       } else {
         throw new Error(data.error || 'Deployment failed')
@@ -414,23 +415,32 @@ export default function OnboardPage() {
                 ))}
               </div>
 
-              <button
-                onClick={handleQuickDeploy}
-                disabled={isDeploying}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
-              >
-                {isDeploying ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deploying your agent...
-                  </>
-                ) : (
-                  <>
-                    🚀 Deploy {agentConfig.agentName} — ₹{PLAN_PRICES[selectedPlan].inr}/mo
-                  </>
-                )}
-              </button>
-              <p className="text-xs text-center text-gray-500 mt-2">7-day free trial • Cancel anytime • No setup fee</p>
+              <div className="space-y-2">
+                <button
+                  onClick={() => deployAgent()} // Free trial - skip payment
+                  disabled={isDeploying}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  {isDeploying ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Deploying your agent...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Start Free Trial (7 days)
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleQuickDeploy}
+                  disabled={isDeploying}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  {isDeploying ? '...' : `🚀 Deploy Now — ₹${PLAN_PRICES[selectedPlan].inr}/mo`}
+                </button>
+              </div>
+              <p className="text-xs text-center text-gray-500 mt-2">Choose above: Start free trial OR deploy with payment</p>
             </div>
           )}
 

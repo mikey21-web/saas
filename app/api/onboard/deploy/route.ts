@@ -24,12 +24,13 @@ interface DeployRequest {
   plan: 'intern' | 'agent'
   paymentId?: string
   skipPayment?: boolean // Create agent but don't activate until payment
+  isFreeTrialat?: boolean // Free trial - no payment required, 7 days active
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as DeployRequest
-    const { agentType, agentIcon, config, userId, plan, skipPayment } = body
+    const { agentType, agentIcon, config, userId, plan, skipPayment, isFreeTrialat } = body
 
     const supabase = supabaseAdmin
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
       products: config.products || '',
       tone: config.tone || 'friendly',
       language: config.language || 'English',
-      status: skipPayment ? 'pending' : 'active', // pending until payment confirmed
+      status: isFreeTrialat || !skipPayment ? 'active' : 'pending', // Free trial = active immediately
       model_tier: plan === 'agent' ? 'balanced' : 'fast',
       channels: ['whatsapp', 'email'],
       knowledge_base: config.keyInstructions
@@ -54,7 +55,8 @@ export async function POST(req: NextRequest) {
       monthly_call_limit: plan === 'agent' ? 500 : 100,
       monthly_email_limit: plan === 'agent' ? 2000 : 500,
       monthly_whatsapp_limit: plan === 'agent' ? 1000 : 0,
-      deployed_at: skipPayment ? null : new Date().toISOString(),
+      deployed_at: new Date().toISOString(),
+      trial_ends_at: isFreeTrialat ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
     }
 
     const { data: agent, error } = await (supabase.from('agents') as any)
