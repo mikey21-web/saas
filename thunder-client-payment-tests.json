@@ -1,0 +1,158 @@
+{
+  "info": {
+    "name": "diyaa.ai Payment Testing",
+    "description": "Complete test collection for Razorpay and Stripe payment flows",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create Agent (skipPayment)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/onboard/deploy",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "onboard", "deploy"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agentType\": \"LeadCatcher\",\n  \"agentIcon\": \"🎯\",\n  \"config\": {\n    \"businessName\": \"Test Business\",\n    \"industry\": \"Sales\",\n    \"products\": \"Test Product\",\n    \"targetCustomers\": \"Test Customers\",\n    \"tone\": \"friendly\",\n    \"language\": \"English\",\n    \"agentPersonality\": \"Helpful\",\n    \"activeHours\": \"9:00-21:00\",\n    \"keyInstructions\": \"Be helpful\",\n    \"agentName\": \"Test Agent\"\n  },\n  \"userId\": \"test-user-thunder\",\n  \"plan\": \"agent\",\n  \"skipPayment\": true\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2a. Mock Razorpay Payment Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "x-razorpay-signature",
+            "value": "test-signature"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/webhooks/razorpay",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "webhooks", "razorpay"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.authorized\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test_razorpay_123\",\n        \"order_id\": \"order_123\",\n        \"status\": \"captured\",\n        \"notes\": {\n          \"userId\": \"test-user-thunder\",\n          \"agentId\": \"REPLACE_WITH_AGENT_ID_FROM_STEP_1\",\n          \"plan\": \"agent\"\n        }\n      }\n    }\n  }\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2b. Mock Stripe Payment Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "stripe-signature",
+            "value": "test-signature"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/webhooks/stripe",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "webhooks", "stripe"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_stripe_123\",\n      \"payment_status\": \"paid\",\n      \"amount_total\": 499900,\n      \"currency\": \"inr\",\n      \"client_reference_id\": \"agent_REPLACE_WITH_AGENT_ID_test-user-thunder\",\n      \"payment_intent\": \"pi_test_stripe_123\",\n      \"metadata\": {\n        \"plan\": \"agent\",\n        \"agent_id\": \"REPLACE_WITH_AGENT_ID_FROM_STEP_1\",\n        \"user_id\": \"test-user-thunder\"\n      }\n    }\n  }\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3. Mock Payment Simulator (Razorpay)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/webapp-testing/mock-payment",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "webapp-testing", "mock-payment"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agentId\": \"REPLACE_WITH_AGENT_ID_FROM_STEP_1\",\n  \"userId\": \"test-user-thunder\",\n  \"provider\": \"razorpay\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3b. Mock Payment Simulator (Stripe)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/webapp-testing/mock-payment",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "webapp-testing", "mock-payment"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agentId\": \"REPLACE_WITH_AGENT_ID_FROM_STEP_1\",\n  \"userId\": \"test-user-thunder\",\n  \"provider\": \"stripe\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Verify Agent Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/agents?agentId=REPLACE_WITH_AGENT_ID_FROM_STEP_1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "agents"],
+          "query": [
+            {
+              "key": "agentId",
+              "value": "REPLACE_WITH_AGENT_ID_FROM_STEP_1"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

@@ -43,6 +43,42 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Multi-Agent Workflows Showcase */}
+      <section className="bg-gradient-to-r from-blue-50 to-indigo-50 py-20 border-t border-gray-200">
+        <div className="container">
+          <h2 className="section-title text-center mb-4">Flagship: Task Assignment Workflow</h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">5 autonomous AI agents working together to solve your Monday meeting chaos</p>
+
+          <div className="bg-white rounded-xl p-8 border border-blue-200 mb-8">
+            <div className="grid grid-cols-5 gap-4 mb-8">
+              {[
+                { num: '1', name: 'Parser', desc: 'Extracts tasks from meeting notes' },
+                { num: '2', name: 'Router', desc: 'Assigns to team members' },
+                { num: '3', name: 'Notifier', desc: 'Sends WhatsApp alerts' },
+                { num: '4', name: 'Tracker', desc: 'Monitors completion' },
+                { num: '5', name: 'Reporter', desc: 'Generates evening report' },
+              ].map((agent, i) => (
+                <div key={i} className="text-center">
+                  <div className="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold mx-auto mb-3 text-xl">{agent.num}</div>
+                  <h4 className="font-semibold text-gray-900">{agent.name}</h4>
+                  <p className="text-xs text-gray-600 mt-1">{agent.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <p className="text-sm text-gray-700"><strong>The Problem Solved:</strong> Monday meetings take 2 hours, tasks get lost, no follow-up. ₹50L+ annual leakage per business.</p>
+              <p className="text-sm text-gray-700 mt-2"><strong>The Solution:</strong> Meeting notes → 5 agents → Tasks assigned + messaged + tracked + reported. All automated. ₹2,499/month.</p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link href="/store">
+              <button className="btn btn-primary text-lg px-8 py-4">Try Task Assignment Workflow →</button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="bg-white py-20 border-t border-gray-200">
         <div className="container">

@@ -8,6 +8,7 @@ import { UserButton } from "@clerk/nextjs";
 const sidebarItems = [
   { name: "Your Agents", href: "/dashboard", icon: "🤖" },
   { name: "Agent Store", href: "/store", icon: "🏪" },
+  { name: "Workflows", href: "/workflows/task-assignment", icon: "⚙️🔄" },
   { name: "Skills", href: "/skills", icon: "⚡" },
   { name: "Projects", href: "/projects", icon: "📁" },
   { name: "Contacts", href: "/contacts", icon: "👥" },

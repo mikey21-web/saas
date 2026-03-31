@@ -209,6 +209,28 @@ export default function OnboardPage() {
 
     const plan = PLAN_PRICES[selectedPlan]
 
+    // First create the agent to get agentId, then open payment
+    // This ensures webhook has agentId in notes
+    const agentRes = await fetch('/api/onboard/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agentType: agentName,
+        agentIcon,
+        config: agentConfig,
+        userId: user.id,
+        plan: selectedPlan,
+        skipPayment: true, // Create but don't activate until payment
+      }),
+    })
+
+    const agentData = await agentRes.json() as { success: boolean; agentId: string }
+    if (!agentData.success) {
+      setIsDeploying(false)
+      alert('Failed to create agent')
+      return
+    }
+
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
       amount: plan.inr * 100,
@@ -220,6 +242,7 @@ export default function OnboardPage() {
         agentType: agentName,
         userId: user.id,
         plan: selectedPlan,
+        agentId: agentData.agentId, // Add agentId so webhook can activate it
       },
       theme: { color: '#2563EB' },
       handler: async (response: { razorpay_payment_id: string }) => {

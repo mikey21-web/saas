@@ -12,10 +12,11 @@ const priceIds = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { tier, currency, email } = await request.json()
+    const { agentId, userId, plan, agentName, email } = await request.json()
 
-    if (!tier || !email || !priceIds[tier as keyof typeof priceIds]) {
-      return NextResponse.json({ error: 'Invalid tier or email' }, { status: 400 })
+    // Support both agent-specific and tier-based checkouts
+    if (!email || !plan || !priceIds[plan as keyof typeof priceIds]) {
+      return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
     }
 
     // Create Stripe checkout session
@@ -25,22 +26,32 @@ export async function POST(request: NextRequest) {
       customer_email: email,
       line_items: [
         {
-          price: priceIds[tier as keyof typeof priceIds],
+          price: priceIds[plan as keyof typeof priceIds],
           quantity: 1,
         },
       ],
       subscription_data: {
         trial_period_days: 7,
         metadata: {
-          tier,
+          plan,
           email,
+          agent_id: agentId || '',
+          user_id: userId || '',
         },
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true&tier=${tier}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout?tier=${tier}&currency=${currency}`,
+      // For agent deployments, include client_reference_id to activate after payment
+      ...(agentId && userId && {
+        client_reference_id: `agent_${agentId}_${userId}`,
+      }),
+      success_url: agentId
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/onboard/success?agentId=${agentId}&agentName=${encodeURIComponent(agentName)}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true&plan=${plan}`,
+      cancel_url: agentId
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/onboard/${encodeURIComponent(agentName)}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/checkout?plan=${plan}`,
     })
 
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error) {
     console.error('Stripe checkout error:', error)
     return NextResponse.json(

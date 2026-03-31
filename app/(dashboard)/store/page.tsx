@@ -7,6 +7,18 @@ import { Search, Zap, Sparkles } from 'lucide-react'
 
 const agents = [
   {
+    id: 0,
+    name: 'TaskMaster',
+    category: 'Operations',
+    icon: '📋',
+    desc: '5-agent workflow: Parse meetings → Assign tasks → Send notifications → Track progress → Report daily',
+    pain: 'Monday meetings taking forever, tasks never get done',
+    features: ['Parse meeting notes', 'AI task extraction', 'Smart assignment', 'Multi-channel notifications', 'Daily reports', 'Progress tracking'],
+    targetBusiness: 'Any team with recurring meetings',
+    badge: 'Multi-Agent 🚀',
+    workflow: true,
+  },
+  {
     id: 1,
     name: 'LeadCatcher',
     category: 'Sales',
@@ -167,12 +179,21 @@ export default function AgentStorePage() {
   const router = useRouter()
 
   const handleSmartDeploy = (agent: typeof agents[0]) => {
-    router.push(
-      `/onboard/${encodeURIComponent(agent.name)}?name=${encodeURIComponent(agent.name)}&icon=${encodeURIComponent(agent.icon)}&plan=agent`
-    )
+    if ((agent as any).workflow) {
+      // For workflow agents, go directly to workflow execution page
+      router.push('/workflows/task-assignment')
+    } else {
+      router.push(
+        `/onboard/${encodeURIComponent(agent.name)}?name=${encodeURIComponent(agent.name)}&icon=${encodeURIComponent(agent.icon)}&plan=agent`
+      )
+    }
   }
 
   const handleQuickDeploy = async (agent: typeof agents[0]) => {
+    if ((agent as any).workflow) {
+      router.push('/workflows/task-assignment')
+      return
+    }
     setDeployingId(agent.id)
     // Quick deploy: go straight to payment via onboard page with plan pre-selected
     router.push(
@@ -246,9 +267,16 @@ export default function AgentStorePage() {
               {/* Icon & Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="text-4xl">{agent.icon}</div>
-                <span className="text-xs font-bold text-white bg-gray-400 px-2 py-1 rounded">
-                  {agent.category}
-                </span>
+                <div className="flex flex-col gap-1 items-end">
+                  {(agent as any).badge && (
+                    <span className="text-xs font-bold text-white bg-purple-600 px-2 py-1 rounded">
+                      {(agent as any).badge}
+                    </span>
+                  )}
+                  <span className="text-xs font-bold text-white bg-gray-400 px-2 py-1 rounded">
+                    {agent.category}
+                  </span>
+                </div>
               </div>
 
               {/* Title */}

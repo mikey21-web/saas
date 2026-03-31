@@ -23,12 +23,13 @@ interface DeployRequest {
   userId: string
   plan: 'intern' | 'agent'
   paymentId?: string
+  skipPayment?: boolean // Create agent but don't activate until payment
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as DeployRequest
-    const { agentType, agentIcon, config, userId, plan } = body
+    const { agentType, agentIcon, config, userId, plan, skipPayment } = body
 
     const supabase = supabaseAdmin
 
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
       products: config.products || '',
       tone: config.tone || 'friendly',
       language: config.language || 'English',
-      status: 'active',
+      status: skipPayment ? 'pending' : 'active', // pending until payment confirmed
       model_tier: plan === 'agent' ? 'balanced' : 'fast',
       channels: ['whatsapp', 'email'],
       knowledge_base: config.keyInstructions
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
       monthly_call_limit: plan === 'agent' ? 500 : 100,
       monthly_email_limit: plan === 'agent' ? 2000 : 500,
       monthly_whatsapp_limit: plan === 'agent' ? 1000 : 0,
+      deployed_at: skipPayment ? null : new Date().toISOString(),
     }
 
     const { data: agent, error } = await (supabase.from('agents') as any)
