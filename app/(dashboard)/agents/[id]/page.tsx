@@ -84,27 +84,88 @@ export default function AgentDetailPage() {
     if (!inputValue.trim() || !agent || isSending) return
 
     setIsSending(true)
-    const userMessage = { role: 'user' as const, content: inputValue }
+    const messageContent = inputValue
+    const userMessage = { role: 'user' as const, content: messageContent }
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
 
     try {
+      // Send to streaming API endpoint
       const res = await fetch(`/api/agents/${agentId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: inputValue,
-          agentId,
-          userId: user?.id,
+          message: messageContent,
+          channel: 'whatsapp',
+          conversationId: `conv_${agentId}_${Date.now()}`,
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to send message')
-      const data = await res.json() as { response: string }
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+
+      // Add placeholder for assistant response
+      let assistantMessageIndex = -1
+      setMessages(prev => {
+        assistantMessageIndex = prev.length
+        return [...prev, { role: 'assistant', content: '' }]
+      })
+
+      // Read the SSE stream
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No response body')
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let fullContent = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+
+          const data = line.slice(6)
+          if (data === '[DONE]') continue
+
+          try {
+            const parsed = JSON.parse(data) as { type?: string; content?: string; error?: string }
+
+            if (parsed.type === 'chunk' && parsed.content) {
+              fullContent += parsed.content
+              // Update the assistant message in real-time
+              setMessages(prev => {
+                const updated = [...prev]
+                if (assistantMessageIndex >= 0) {
+                  updated[assistantMessageIndex] = {
+                    role: 'assistant',
+                    content: fullContent,
+                  }
+                }
+                return updated
+              })
+            } else if (parsed.type === 'error') {
+              throw new Error(parsed.error || 'Unknown error')
+            }
+          } catch (e) {
+            if (e instanceof Error && !e.message.includes('JSON')) {
+              throw e
+            }
+          }
+        }
+      }
+
+      if (!fullContent) {
+        throw new Error('No response from agent')
+      }
     } catch (err) {
       console.error('Chat error:', err)
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I had an error processing your message.' }])
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get response'
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${errorMsg}` }])
     } finally {
       setIsSending(false)
     }
