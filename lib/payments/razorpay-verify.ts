@@ -33,7 +33,7 @@ export function verifyStripeSignature(
   try {
     const hmac = crypto.createHmac('sha256', secret)
     hmac.update(body)
-    const expectedSignature = `t=${Date.now()},v1=${hmac.digest('hex')}`
+    const expectedV1 = hmac.digest('hex')
 
     // Extract v1 from signature header
     const parts = signature.split(',')
@@ -41,7 +41,6 @@ export function verifyStripeSignature(
     if (!v1Match) return false
 
     const receivedSignature = v1Match.replace('v1=', '')
-    const expectedV1 = hmac.digest('hex')
 
     return receivedSignature === expectedV1
   } catch {

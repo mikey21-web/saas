@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/lib/supabase/client";
-import { sendWhatsAppNotification, sendEmailNotification, logNotificationActivity } from "@/lib/channels/notifications";
+import { sendWhatsAppNotification, logNotificationActivity } from "@/lib/channels/notifications";
 
 /**
  * Task Assignment Workflow Orchestrator
@@ -278,7 +278,7 @@ Output JSON with this format:
           created_at: new Date().toISOString(),
         };
 
-        const { data, error } = await (supabaseAdmin
+        const { data, error } = await ((supabaseAdmin as any)
           .from("tasks")
           .insert(taskData)
           .select("id")) as any;
@@ -364,7 +364,7 @@ Output JSON with this format:
     };
 
     // Create workflow execution record
-    const { data: executionData } = await (supabaseAdmin
+    const { data: executionData } = await ((supabaseAdmin as any)
       .from("workflow_executions")
       .insert({
         user_id: input.userId,
@@ -394,7 +394,7 @@ Output JSON with this format:
 
     // Update execution record with final status
     if (state.executionId) {
-      await (supabaseAdmin
+      await ((supabaseAdmin as any)
         .from("workflow_executions")
         .update({
           status: state.errors.length === 0 ? "completed" : "failed",

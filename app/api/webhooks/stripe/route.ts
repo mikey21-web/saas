@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
       if (agentId && userId) {
         // Log failed payment
-        await supabaseAdmin.from('activity_logs').insert({
+        await ((supabaseAdmin as any).from('activity_logs').insert({
           user_id: userId,
           agent_id: agentId,
           action: 'payment_failed',
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
             failureMessage: charge.failure_message,
             status: 'failed',
           },
-        })
+        })) as any
         console.log(`✗ Payment failed for agent ${agentId}`)
       }
       break

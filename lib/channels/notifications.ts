@@ -30,7 +30,7 @@ export async function sendWhatsAppNotification(
 
   try {
     // Log notification to database
-    await supabaseAdmin.from('notifications').insert({
+    await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -45,7 +45,7 @@ export async function sendWhatsAppNotification(
         mock: true,
         simulated: true,
       },
-    })
+    }) as any
 
     console.log(`[WhatsApp Mock] Sent to ${payload.recipient}: ${payload.message.substring(0, 50)}...`)
 
@@ -79,7 +79,7 @@ export async function sendEmailNotification(
 
   try {
     // Log notification to database
-    await supabaseAdmin.from('notifications').insert({
+    await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -94,7 +94,7 @@ export async function sendEmailNotification(
         mock: true,
         simulated: true,
       },
-    })
+    }) as any
 
     console.log(`[Email Mock] Sent to ${payload.recipient}: ${payload.title}`)
 
@@ -128,7 +128,7 @@ export async function sendSMSNotification(
 
   try {
     // Log notification to database
-    await supabaseAdmin.from('notifications').insert({
+    await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -143,7 +143,7 @@ export async function sendSMSNotification(
         mock: true,
         simulated: true,
       },
-    })
+    }) as any
 
     console.log(`[SMS Mock] Sent to ${payload.recipient}: ${payload.message.substring(0, 30)}...`)
 
@@ -207,12 +207,12 @@ export async function logNotificationActivity(
   details: Record<string, unknown>
 ): Promise<void> {
   try {
-    await supabaseAdmin.from('activity_logs').insert({
+    await (supabaseAdmin as any).from('activity_logs').insert({
       user_id: userId,
       agent_id: agentId,
       action,
       details,
-    })
+    }) as any
   } catch (error) {
     console.error('Failed to log notification activity:', error)
   }
