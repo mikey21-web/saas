@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/client'
+import { saveAgentCredentials } from '@/lib/supabase/credentials'
 
 export const runtime = 'nodejs'
 
@@ -16,12 +17,21 @@ interface AgentConfig {
   agentName: string
 }
 
+interface AgentCredentials {
+  whatsapp_number?: string
+  website_url?: string
+  openai_api_key?: string
+  groq_api_key?: string
+  use_diyaa_ai_powered?: boolean
+}
+
 interface DeployRequest {
   agentType: string
   agentIcon: string
   config: AgentConfig
   userId: string
   plan: 'intern' | 'agent'
+  credentials?: AgentCredentials // New: credentials collection
   paymentId?: string
   skipPayment?: boolean // Create agent but don't activate until payment
   isFreeTrialat?: boolean // Free trial - no payment required, 7 days active
@@ -30,7 +40,7 @@ interface DeployRequest {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as DeployRequest
-    const { agentType, agentIcon, config, userId, plan, skipPayment, isFreeTrialat } = body
+    const { agentType, agentIcon, config, userId, plan, credentials, skipPayment, isFreeTrialat } = body
 
     const supabase = supabaseAdmin
 
@@ -73,6 +83,15 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
 
+    // Save credentials if provided (encrypted in agent_credentials table)
+    if (credentials) {
+      const credResult = await saveAgentCredentials(userId, agent.id, credentials)
+      if (!credResult.success) {
+        console.warn('Failed to save credentials:', credResult.error)
+        // Don't fail deployment, just warn
+      }
+    }
+
     // Log activity
     await (supabase.from('activity_logs') as any).insert({
       user_id: userId,
@@ -83,6 +102,7 @@ export async function POST(req: NextRequest) {
         plan,
         businessName: config.businessName,
         configuredVia: 'smart_onboard',
+        hasCredentials: !!credentials,
       },
     })
 

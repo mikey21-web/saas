@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Script from 'next/script'
+import { ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react'
+import CredentialsStep from '@/components/onboarding/credentials-step'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -23,10 +25,26 @@ interface AgentConfig {
   agentName: string
 }
 
+interface AgentCredentials {
+  whatsapp_number?: string
+  website_url?: string
+  openai_api_key?: string
+  groq_api_key?: string
+  use_diyaa_ai_powered?: boolean
+}
+
 const PLAN_PRICES = {
   intern: { inr: 999, usd: 25, label: 'Intern Plan' },
   agent: { inr: 2499, usd: 50, label: 'Agent Plan' },
 }
+
+const STEPS = [
+  { id: 1, title: 'Smart Interview', desc: 'Tell us about your business' },
+  { id: 2, title: 'Knowledge Base', desc: 'Add docs or website (optional)' },
+  { id: 3, title: 'Personality', desc: 'Tone, hours, instructions' },
+  { id: 4, title: 'Credentials', desc: 'Connect WhatsApp & AI model' },
+  { id: 5, title: 'Review & Deploy', desc: 'Ready to launch?' },
+]
 
 function extractAgentConfig(text: string): AgentConfig | null {
   const match = text.match(/```AGENT_CONFIG\n([\s\S]*?)```/)
@@ -42,14 +60,13 @@ function stripConfigBlock(text: string): string {
   return text.replace(/```AGENT_CONFIG\n[\s\S]*?```/, '').trim()
 }
 
-// Declare Razorpay on window
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => { open(): void }
   }
 }
 
-export default function OnboardPage() {
+export default function OnboardPageMultiStep() {
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -60,13 +77,22 @@ export default function OnboardPage() {
   const agentIcon = searchParams.get('icon') || '🤖'
   const selectedPlan = (searchParams.get('plan') || 'agent') as 'intern' | 'agent'
 
+  // State
+  const [currentStep, setCurrentStep] = useState(1)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [credentials, setCredentials] = useState<AgentCredentials | null>(null)
+  const [knowledgeBase, setKnowledgeBase] = useState('')
+  const [personality, setPersonality] = useState({
+    tone: 'friendly',
+    activeHours: '9:00-21:00',
+    language: 'English',
+  })
   const [isDeploying, setIsDeploying] = useState(false)
-  const [questionCount, setQuestionCount] = useState(0)
   const [razorpayLoaded, setRazorpayLoaded] = useState(false)
+  const [questionCount, setQuestionCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const streamingMessageRef = useRef('')
@@ -79,17 +105,18 @@ export default function OnboardPage() {
     scrollToBottom()
   }, [messages])
 
-  // Start interview on mount
+  // Start interview when step 1 is reached
   useEffect(() => {
-    startInterview()
+    if (currentStep === 1 && messages.length === 0) {
+      startInterview()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentStep])
 
   const streamResponse = useCallback(async (userMessages: Message[]) => {
     setIsStreaming(true)
     streamingMessageRef.current = ''
 
-    // Add empty assistant message placeholder
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     try {
@@ -118,17 +145,14 @@ export default function OnboardPage() {
           const data = line.slice(6)
           if (data === '[DONE]') continue
           try {
-            const parsed = JSON.parse(data) as { token?: string; error?: string }
+            const parsed = JSON.parse(data) as { token?: string }
             if (parsed.token) {
               streamingMessageRef.current += parsed.token
-              const fullText = streamingMessageRef.current
-
-              // Update the last message in real-time
               setMessages(prev => {
                 const updated = [...prev]
                 updated[updated.length - 1] = {
                   role: 'assistant',
-                  content: fullText,
+                  content: streamingMessageRef.current,
                 }
                 return updated
               })
@@ -139,12 +163,10 @@ export default function OnboardPage() {
         }
       }
 
-      // Check if config is complete
       const finalText = streamingMessageRef.current
       const config = extractAgentConfig(finalText)
       if (config) {
         setAgentConfig(config)
-        // Clean the display message
         setMessages(prev => {
           const updated = [...prev]
           updated[updated.length - 1] = {
@@ -154,13 +176,12 @@ export default function OnboardPage() {
           return updated
         })
       }
-
     } catch (err) {
       setMessages(prev => {
         const updated = [...prev]
         updated[updated.length - 1] = {
           role: 'assistant',
-          content: 'Sorry, I had a connection issue. Please try again.',
+          content: 'Sorry, connection issue. Try again.',
         }
         return updated
       })
@@ -184,7 +205,6 @@ export default function OnboardPage() {
     setInput('')
     setQuestionCount(q => q + 1)
 
-    // Only send user messages to API (exclude streaming placeholders)
     const apiMessages = newMessages.filter(m => m.content.length > 0)
     await streamResponse(apiMessages)
   }
@@ -196,21 +216,82 @@ export default function OnboardPage() {
     }
   }
 
-  const handleQuickDeploy = async () => {
+  const canProceedToNext = () => {
+    switch (currentStep) {
+      case 1:
+        return !!agentConfig
+      case 2:
+        return true // Knowledge base is optional
+      case 3:
+        return true // Personality has defaults
+      case 4:
+        return !!credentials
+      case 5:
+        return true
+      default:
+        return false
+    }
+  }
+
+  const handleCredentialsSubmit = async (creds: AgentCredentials) => {
+    setCredentials(creds)
+    // Move to review step
+    setCurrentStep(5)
+  }
+
+  const handleDeploy = async (paymentId?: string) => {
     if (!user || !agentConfig) return
     setIsDeploying(true)
 
-    // Open Razorpay
+    try {
+      const res = await fetch('/api/onboard/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentType: agentName,
+          agentIcon,
+          config: {
+            ...agentConfig,
+            tone: personality.tone,
+            activeHours: personality.activeHours,
+            language: personality.language,
+            keyInstructions: knowledgeBase || agentConfig.keyInstructions,
+          },
+          credentials, // Include encrypted credentials
+          userId: user.id,
+          plan: selectedPlan,
+          paymentId,
+          isFreeTrialat: true,
+        }),
+      })
+
+      const data = await res.json() as { success?: boolean; agentId?: string; error?: string }
+
+      if (data.success && data.agentId) {
+        router.push(
+          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName || 'Agent')}&icon=${encodeURIComponent(agentIcon)}&trial=1`
+        )
+      } else {
+        throw new Error(data.error || 'Deployment failed')
+      }
+    } catch (err) {
+      console.error('Deploy failed:', err)
+      alert(`Deploy error: ${String(err)}`)
+      setIsDeploying(false)
+    }
+  }
+
+  const handlePaymentDeploy = async () => {
+    if (!user || !agentConfig) return
+    setIsDeploying(true)
+
     if (!razorpayLoaded || !window.Razorpay) {
-      // Fallback to Stripe or direct deploy if Razorpay not loaded
-      await deployAgent()
+      await handleDeploy()
       return
     }
 
     const plan = PLAN_PRICES[selectedPlan]
 
-    // First create the agent to get agentId, then open payment
-    // This ensures webhook has agentId in notes
     const agentRes = await fetch('/api/onboard/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -218,9 +299,10 @@ export default function OnboardPage() {
         agentType: agentName,
         agentIcon,
         config: agentConfig,
+        credentials,
         userId: user.id,
         plan: selectedPlan,
-        skipPayment: true, // Create but don't activate until payment
+        skipPayment: true,
       }),
     })
 
@@ -237,16 +319,15 @@ export default function OnboardPage() {
       currency: 'INR',
       name: 'diyaa.ai',
       description: `${agentConfig.agentName} — ${plan.label}`,
-      image: '/logo.png',
       notes: {
         agentType: agentName,
         userId: user.id,
         plan: selectedPlan,
-        agentId: agentData.agentId, // Add agentId so webhook can activate it
+        agentId: agentData.agentId,
       },
-      theme: { color: '#2563EB' },
+      theme: { color: '#e879f9' },
       handler: async (response: { razorpay_payment_id: string }) => {
-        await deployAgent(response.razorpay_payment_id)
+        await handleDeploy(response.razorpay_payment_id)
       },
       modal: {
         ondismiss: () => setIsDeploying(false),
@@ -257,48 +338,9 @@ export default function OnboardPage() {
       const rzp = new window.Razorpay(options)
       rzp.open()
     } catch {
-      // Razorpay not available, deploy directly
-      await deployAgent()
+      await handleDeploy()
     }
   }
-
-  const deployAgent = async (paymentId?: string) => {
-    if (!user || !agentConfig) return
-    setIsDeploying(true)
-
-    try {
-      const res = await fetch('/api/onboard/deploy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentType: agentName,
-          agentIcon,
-          config: agentConfig,
-          userId: user.id,
-          plan: 'agent', // Free trial = Agent tier for 7 days
-          paymentId,
-          isFreeTrialat: true, // Skip payment requirement for free trial
-        }),
-      })
-
-      const data = await res.json() as { success?: boolean; agentId?: string; agentName?: string; error?: string }
-
-      if (data.success && data.agentId) {
-        router.push(
-          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName || 'Agent')}&icon=${encodeURIComponent(agentIcon)}&trial=1`
-        )
-      } else {
-        throw new Error(data.error || 'Deployment failed')
-      }
-    } catch (err) {
-      console.error('Deploy failed:', err)
-      alert(`Deploy error: ${String(err)}`)
-      setIsDeploying(false)
-    }
-  }
-
-  const progressPercent = Math.min((questionCount / 6) * 100, 100)
-  const isComplete = !!agentConfig
 
   return (
     <>
@@ -307,173 +349,471 @@ export default function OnboardPage() {
         onLoad={() => setRazorpayLoaded(true)}
       />
 
-      <div className="flex flex-col h-[calc(100vh-120px)] max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-t-xl border border-gray-200 p-4 flex items-center gap-3">
-          <div className="text-3xl">{agentIcon}</div>
-          <div className="flex-1">
-            <h2 className="font-bold text-gray-900">{agentName} Setup</h2>
-            <p className="text-xs text-gray-500">
-              {isComplete ? 'Configuration complete! Ready to deploy.' : `Customizing for your business`}
-            </p>
-          </div>
-          {/* Progress Bar */}
-          <div className="w-24">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>{isComplete ? 'Done' : `Q${questionCount}/6`}</span>
-              <span>{Math.round(progressPercent)}%</span>
-            </div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
+      <div className="min-h-screen flex flex-col" style={{ background: '#0c0c0d' }}>
+        {/* Step Indicator */}
+        <div className="border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+          <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="flex items-center gap-2">
+              {STEPS.map((step, i) => (
+                <div key={step.id} className="flex items-center flex-1">
+                  {/* Step Circle */}
+                  <button
+                    onClick={() => currentStep > step.id && setCurrentStep(step.id)}
+                    disabled={currentStep < step.id}
+                    className={`w-10 h-10 rounded-full font-bold flex items-center justify-center transition-all ${
+                      step.id < currentStep
+                        ? 'bg-green-600 text-white'
+                        : step.id === currentStep
+                          ? 'border-2 text-white'
+                          : 'opacity-50'
+                    }`}
+                    style={{
+                      borderColor: step.id === currentStep ? '#e879f9' : undefined,
+                      background: step.id < currentStep ? '#10b981' : undefined,
+                    }}
+                  >
+                    {step.id < currentStep ? <CheckCircle2 size={20} /> : step.id}
+                  </button>
+
+                  {/* Step Label */}
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-bold" style={{ color: '#f0eff0' }}>
+                      {step.title}
+                    </p>
+                    <p className="text-xs" style={{ color: '#71717a' }}>
+                      {step.desc}
+                    </p>
+                  </div>
+
+                  {/* Connector */}
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className="h-0.5 flex-1 ml-3"
+                      style={{
+                        background:
+                          step.id < currentStep ? '#10b981' : 'rgba(255,255,255,0.1)',
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 border-x border-gray-200 p-4 space-y-4">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-1">
-                  🤖
+        {/* Step Content */}
+        <div className="flex-1 flex flex-col">
+          <div className="max-w-4xl mx-auto w-full px-6 py-8 flex-1">
+            {/* Step 1: Smart Interview */}
+            {currentStep === 1 && (
+              <div className="flex flex-col h-full max-w-2xl">
+                <h2 className="text-2xl font-bold mb-2" style={{ color: '#f0eff0' }}>
+                  Tell Us About Your Business
+                </h2>
+                <p className="mb-6" style={{ color: '#71717a' }}>
+                  Answer a few quick questions so {agentName} understands your business
+                </p>
+
+                {/* Chat Area */}
+                <div
+                  className="flex-1 overflow-y-auto mb-4 p-4 rounded-lg space-y-4"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  {messages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
+                          msg.role === 'user'
+                            ? 'rounded-br-none'
+                            : 'rounded-bl-none'
+                        }`}
+                        style={{
+                          background:
+                            msg.role === 'user'
+                              ? '#e879f9'
+                              : 'rgba(255,255,255,0.05)',
+                          color:
+                            msg.role === 'user'
+                              ? '#0c0c0d'
+                              : '#f0eff0',
+                          border:
+                            msg.role === 'user'
+                              ? 'none'
+                              : '1px solid rgba(255,255,255,0.1)',
+                        }}
+                      >
+                        {msg.content || (
+                          <span className="flex gap-1">
+                            <span
+                              className="w-2 h-2 rounded-full animate-bounce"
+                              style={{ background: '#e879f9', animationDelay: '0ms' }}
+                            />
+                            <span
+                              className="w-2 h-2 rounded-full animate-bounce"
+                              style={{ background: '#e879f9', animationDelay: '150ms' }}
+                            />
+                            <span
+                              className="w-2 h-2 rounded-full animate-bounce"
+                              style={{ background: '#e879f9', animationDelay: '300ms' }}
+                            />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-sm'
-                    : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
-                }`}
-              >
-                {msg.content || (
-                  <span className="flex gap-1">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </span>
+
+                {/* Input Area */}
+                {!agentConfig && (
+                  <div className="flex gap-2">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Type your answer..."
+                      disabled={isStreaming}
+                      className="flex-1 px-4 py-3 rounded-lg text-sm focus:outline-none disabled:opacity-50"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: '#f0eff0',
+                      }}
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={isStreaming || !input.trim()}
+                      className="px-6 py-3 rounded-lg font-medium text-sm transition-all disabled:opacity-50"
+                      style={{ background: '#e879f9', color: '#0c0c0d' }}
+                    >
+                      Send
+                    </button>
+                  </div>
+                )}
+
+                {agentConfig && (
+                  <div
+                    className="p-4 rounded-lg"
+                    style={{ background: 'rgba(232,121,249,0.1)' }}
+                  >
+                    <p className="text-sm font-bold mb-3" style={{ color: '#10b981' }}>
+                      ✅ Configuration captured!
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p style={{ color: '#71717a' }}>Business</p>
+                        <p style={{ color: '#f0eff0' }} className="font-semibold">
+                          {agentConfig.businessName}
+                        </p>
+                      </div>
+                      <div>
+                        <p style={{ color: '#71717a' }}>Industry</p>
+                        <p style={{ color: '#f0eff0' }} className="font-semibold">
+                          {agentConfig.industry}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-              {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm ml-2 flex-shrink-0 mt-1">
-                  👤
-                </div>
-              )}
-            </div>
-          ))}
+            )}
 
-          {/* Config Ready Card */}
-          {isComplete && agentConfig && (
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">✅</span>
-                <h3 className="font-bold text-gray-900">Agent Configured!</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                <div className="bg-white rounded-lg p-2 border border-blue-100">
-                  <p className="text-gray-500">Business</p>
-                  <p className="font-semibold text-gray-800">{agentConfig.businessName}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 border border-blue-100">
-                  <p className="text-gray-500">Industry</p>
-                  <p className="font-semibold text-gray-800">{agentConfig.industry}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 border border-blue-100">
-                  <p className="text-gray-500">Tone</p>
-                  <p className="font-semibold text-gray-800 capitalize">{agentConfig.tone}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 border border-blue-100">
-                  <p className="text-gray-500">Language</p>
-                  <p className="font-semibold text-gray-800">{agentConfig.language}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 border border-blue-100 col-span-2">
-                  <p className="text-gray-500">Active Hours</p>
-                  <p className="font-semibold text-gray-800">{agentConfig.activeHours}</p>
+            {/* Step 2: Knowledge Base */}
+            {currentStep === 2 && (
+              <div className="max-w-2xl">
+                <h2 className="text-2xl font-bold mb-2" style={{ color: '#f0eff0' }}>
+                  Add Knowledge Base (Optional)
+                </h2>
+                <p className="mb-6" style={{ color: '#71717a' }}>
+                  Upload documents, paste FAQs, or scrape your website so {agentName} has context
+                </p>
+
+                <div className="space-y-4">
+                  <textarea
+                    value={knowledgeBase}
+                    onChange={(e) => setKnowledgeBase(e.target.value)}
+                    placeholder="Paste your FAQs, product info, or instructions here..."
+                    className="w-full h-48 px-4 py-3 rounded-lg text-sm focus:outline-none resize-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#f0eff0',
+                    }}
+                  />
+
+                  <p style={{ color: '#71717a' }} className="text-xs">
+                    💡 Tip: Add product info, pricing, FAQs, or any knowledge your agent should know
+                  </p>
                 </div>
               </div>
+            )}
 
-              {/* Plan Selector */}
-              <div className="flex gap-2 mb-3">
-                {(['intern', 'agent'] as const).map((plan) => (
-                  <div
-                    key={plan}
-                    className={`flex-1 rounded-lg p-3 border text-center cursor-pointer ${
-                      selectedPlan === plan
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <p className="font-bold text-sm text-gray-900 capitalize">{plan}</p>
-                    <p className="text-blue-600 font-bold">₹{PLAN_PRICES[plan].inr}/mo</p>
-                    <p className="text-xs text-gray-500">${PLAN_PRICES[plan].usd}/mo</p>
+            {/* Step 3: Personality */}
+            {currentStep === 3 && (
+              <div className="max-w-2xl space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#f0eff0' }}>
+                    Personality & Behavior
+                  </h2>
+                  <p style={{ color: '#71717a' }}>
+                    Set your agent's tone, working hours, and language
+                  </p>
+                </div>
+
+                {/* Tone */}
+                <div>
+                  <label className="block text-sm font-bold mb-3" style={{ color: '#f0eff0' }}>
+                    Tone
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['friendly', 'professional', 'casual'].map((tone) => (
+                      <button
+                        key={tone}
+                        onClick={() =>
+                          setPersonality({ ...personality, tone })
+                        }
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize"
+                        style={{
+                          background:
+                            personality.tone === tone
+                              ? '#e879f9'
+                              : 'rgba(255,255,255,0.05)',
+                          color:
+                            personality.tone === tone ? '#0c0c0d' : '#f0eff0',
+                          border:
+                            personality.tone === tone
+                              ? 'none'
+                              : '1px solid rgba(255,255,255,0.1)',
+                        }}
+                      >
+                        {tone}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="space-y-2">
-                <button
-                  onClick={() => deployAgent()} // Free trial - skip payment
-                  disabled={isDeploying}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                {/* Active Hours */}
+                <div>
+                  <label className="block text-sm font-bold mb-3" style={{ color: '#f0eff0' }}>
+                    Active Hours (IST)
+                  </label>
+                  <input
+                    type="text"
+                    value={personality.activeHours}
+                    onChange={(e) =>
+                      setPersonality({ ...personality, activeHours: e.target.value })
+                    }
+                    placeholder="9:00-21:00"
+                    className="w-full px-4 py-2 rounded-lg text-sm focus:outline-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#f0eff0',
+                    }}
+                  />
+                </div>
+
+                {/* Language */}
+                <div>
+                  <label className="block text-sm font-bold mb-3" style={{ color: '#f0eff0' }}>
+                    Language
+                  </label>
+                  <select
+                    value={personality.language}
+                    onChange={(e) =>
+                      setPersonality({ ...personality, language: e.target.value })
+                    }
+                    className="w-full px-4 py-2 rounded-lg text-sm focus:outline-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#f0eff0',
+                    }}
+                  >
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Hinglish">Hinglish (Auto-detect)</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Credentials */}
+            {currentStep === 4 && (
+              <div className="max-w-2xl">
+                <CredentialsStep
+                  onCredentialsSubmit={handleCredentialsSubmit}
+                  isLoading={false}
+                />
+              </div>
+            )}
+
+            {/* Step 5: Review & Deploy */}
+            {currentStep === 5 && (
+              <div className="max-w-2xl">
+                <h2 className="text-2xl font-bold mb-6" style={{ color: '#f0eff0' }}>
+                  Ready to Deploy!
+                </h2>
+
+                {/* Summary Card */}
+                <div
+                  className="p-6 rounded-lg mb-6 space-y-4"
+                  style={{
+                    background: 'rgba(232,121,249,0.1)',
+                    border: '1px solid rgba(232,121,249,0.3)',
+                  }}
                 >
-                  {isDeploying ? (
+                  <div>
+                    <p style={{ color: '#71717a' }} className="text-sm mb-1">
+                      Agent
+                    </p>
+                    <p className="text-lg font-bold" style={{ color: '#f0eff0' }}>
+                      {agentIcon} {agentName}
+                    </p>
+                  </div>
+
+                  {agentConfig && (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Deploying your agent...
-                    </>
-                  ) : (
-                    <>
-                      ✨ Start Free Trial (7 days)
+                      <div>
+                        <p style={{ color: '#71717a' }} className="text-sm mb-1">
+                          Business
+                        </p>
+                        <p style={{ color: '#f0eff0' }} className="font-semibold">
+                          {agentConfig.businessName} ({agentConfig.industry})
+                        </p>
+                      </div>
+
+                      <div>
+                        <p style={{ color: '#71717a' }} className="text-sm mb-1">
+                          Personality
+                        </p>
+                        <p style={{ color: '#f0eff0' }} className="text-sm">
+                          {personality.tone} tone • {personality.activeHours} IST •{' '}
+                          {personality.language}
+                        </p>
+                      </div>
                     </>
                   )}
-                </button>
-                <button
-                  onClick={handleQuickDeploy}
-                  disabled={isDeploying}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  {isDeploying ? '...' : `🚀 Deploy Now — ₹${PLAN_PRICES[selectedPlan].inr}/mo`}
-                </button>
+
+                  {credentials && (
+                    <div>
+                      <p style={{ color: '#71717a' }} className="text-sm mb-1">
+                        Credentials
+                      </p>
+                      <div className="text-sm space-y-1">
+                        {credentials.whatsapp_number && (
+                          <p style={{ color: '#10b981' }}>
+                            ✓ WhatsApp: {credentials.whatsapp_number}
+                          </p>
+                        )}
+                        {credentials.website_url && (
+                          <p style={{ color: '#10b981' }}>
+                            ✓ Website configured
+                          </p>
+                        )}
+                        {credentials.use_diyaa_ai_powered && (
+                          <p style={{ color: '#10b981' }}>
+                            ✓ diyaa.ai Powered AI (₹499/mo extra)
+                          </p>
+                        )}
+                        {credentials.openai_api_key && (
+                          <p style={{ color: '#10b981' }}>✓ OpenAI API key set</p>
+                        )}
+                        {credentials.groq_api_key && (
+                          <p style={{ color: '#10b981' }}>✓ Groq API key set</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <p style={{ color: '#71717a' }} className="text-sm mb-1">
+                      Plan
+                    </p>
+                    <p className="text-lg font-bold" style={{ color: '#e879f9' }}>
+                      {PLAN_PRICES[selectedPlan].label} — ₹
+                      {PLAN_PRICES[selectedPlan].inr}/mo
+                    </p>
+                  </div>
+                </div>
+
+                {/* Deploy Buttons */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleDeploy()}
+                    disabled={isDeploying}
+                    className="w-full py-3 rounded-lg font-bold text-sm transition-all disabled:opacity-50"
+                    style={{
+                      background: '#10b981',
+                      color: 'white',
+                    }}
+                  >
+                    {isDeploying ? 'Deploying...' : '✨ Start Free Trial (7 days)'}
+                  </button>
+
+                  <button
+                    onClick={handlePaymentDeploy}
+                    disabled={isDeploying}
+                    className="w-full py-3 rounded-lg font-bold text-sm transition-all disabled:opacity-50"
+                    style={{
+                      background: '#e879f9',
+                      color: '#0c0c0d',
+                    }}
+                  >
+                    {isDeploying ? '...' : `🚀 Deploy Now — ₹${PLAN_PRICES[selectedPlan].inr}/mo`}
+                  </button>
+                </div>
+
+                <p style={{ color: '#71717a' }} className="text-xs text-center mt-3">
+                  Your credentials are encrypted & never logged • 7-day free trial
+                </p>
               </div>
-              <p className="text-xs text-center text-gray-500 mt-2">Choose above: Start free trial OR deploy with payment</p>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl p-4">
-          {isComplete ? (
-            <p className="text-center text-sm text-gray-500">
-              Your agent is configured! Click Deploy above to go live. 🎉
-            </p>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your answer..."
-                disabled={isStreaming}
-                className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
-              />
+          {/* Navigation Buttons */}
+          <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="max-w-4xl mx-auto px-6 py-6 flex gap-3">
               <button
-                onClick={sendMessage}
-                disabled={isStreaming || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 text-white px-5 py-3 rounded-xl font-medium text-sm transition-colors"
+                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                disabled={currentStep === 1}
+                className="px-6 py-3 rounded-lg font-medium text-sm transition-all disabled:opacity-30 flex items-center gap-2"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  color: '#f0eff0',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
               >
-                {isStreaming ? '...' : 'Send'}
+                <ChevronLeft size={18} /> Back
+              </button>
+
+              <button
+                onClick={() =>
+                  setCurrentStep(Math.min(STEPS.length, currentStep + 1))
+                }
+                disabled={!canProceedToNext() || currentStep === STEPS.length}
+                className="ml-auto px-6 py-3 rounded-lg font-medium text-sm transition-all disabled:opacity-30 flex items-center gap-2"
+                style={{
+                  background:
+                    canProceedToNext() && currentStep < STEPS.length
+                      ? '#e879f9'
+                      : 'rgba(255,255,255,0.05)',
+                  color:
+                    canProceedToNext() && currentStep < STEPS.length
+                      ? '#0c0c0d'
+                      : '#71717a',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                Next <ChevronRight size={18} />
               </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>
