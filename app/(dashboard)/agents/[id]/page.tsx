@@ -156,35 +156,37 @@ export default function AgentDetailPage() {
   ]
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen" style={{ background: '#0c0c0d' }}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(22,22,24,0.4)', backdropFilter: 'blur(10px)' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            className="p-2 rounded-lg transition"
+            style={{ background: 'rgba(255,255,255,0.05)', color: '#f0eff0' }}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl">{agent.icon || '🤖'}</span>
-              <h1 className="text-2xl font-bold text-gray-900">{agent.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#f0eff0' }}>{agent.name}</h1>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 agent.status === 'active'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-700'
+                  ? 'bg-green-600/20 text-green-400'
+                  : 'bg-gray-600/20 text-gray-400'
               }`}>
                 {agent.status}
               </span>
             </div>
-            <p className="text-sm text-gray-500">{agent.business_name} • {agent.industry}</p>
+            <p className="text-sm" style={{ color: '#71717a' }}>{agent.business_name} • {agent.industry}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={toggleAgentStatus}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition"
+            style={{ background: '#e879f9', color: '#0c0c0d' }}
           >
             {agent.status === 'active' ? (
               <>
@@ -202,19 +204,24 @@ export default function AgentDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div className="border-b px-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="flex gap-0">
           {tabs.map(tab => {
             const Icon = tab.icon
+            const isActive = activeTab === tab.id
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-4 font-medium text-sm flex items-center gap-2 border-b-2 transition ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                  isActive
+                    ? 'border-b-2'
+                    : 'border-transparent'
                 }`}
+                style={{
+                  color: isActive ? '#e879f9' : '#71717a',
+                  borderColor: isActive ? '#e879f9' : 'transparent'
+                }}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
@@ -231,7 +238,7 @@ export default function AgentDetailPage() {
           <div className="flex flex-col h-full max-w-4xl mx-auto">
             <div className="flex-1 p-6 overflow-y-auto space-y-4">
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <div className="flex flex-col items-center justify-center h-full" style={{ color: '#71717a' }}>
                   <MessageCircle className="w-12 h-12 mb-2 opacity-50" />
                   <p>Start a conversation with your agent</p>
                 </div>
@@ -244,9 +251,14 @@ export default function AgentDetailPage() {
                     <div
                       className={`max-w-xs px-4 py-3 rounded-lg ${
                         msg.role === 'user'
-                          ? 'bg-blue-600 text-white rounded-br-none'
-                          : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                          ? 'rounded-br-none'
+                          : 'rounded-bl-none'
                       }`}
+                      style={{
+                        background: msg.role === 'user' ? '#e879f9' : 'rgba(255,255,255,0.05)',
+                        color: msg.role === 'user' ? '#0c0c0d' : '#f0eff0',
+                        border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)'
+                      }}
                     >
                       {msg.content}
                     </div>
@@ -255,7 +267,7 @@ export default function AgentDetailPage() {
               )}
             </div>
 
-            <div className="border-t border-gray-200 p-6 bg-white">
+            <div className="border-t p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(22,22,24,0.4)' }}>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -263,13 +275,22 @@ export default function AgentDetailPage() {
                   onChange={e => setInputValue(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && sendMessage()}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 transition"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: '#f0eff0'
+                  }}
                   disabled={isSending}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!inputValue.trim() || isSending}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition"
+                  className="px-6 py-2 rounded-lg font-medium transition"
+                  style={{
+                    background: !inputValue.trim() || isSending ? '#71717a' : '#e879f9',
+                    color: !inputValue.trim() || isSending ? '#0c0c0d' : '#0c0c0d'
+                  }}
                 >
                   {isSending ? '...' : 'Send'}
                 </button>
@@ -281,64 +302,67 @@ export default function AgentDetailPage() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto p-6 space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Agent Configuration</h3>
+            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+              <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Agent Configuration</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-600">Business Name</label>
-                  <p className="text-gray-900 font-medium">{agent.business_name}</p>
+                  <label className="text-sm" style={{ color: '#71717a' }}>Business Name</label>
+                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.business_name}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Industry</label>
-                  <p className="text-gray-900 font-medium">{agent.industry}</p>
+                  <label className="text-sm" style={{ color: '#71717a' }}>Industry</label>
+                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.industry}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Tone</label>
-                  <p className="text-gray-900 font-medium capitalize">{agent.tone}</p>
+                  <label className="text-sm" style={{ color: '#71717a' }}>Tone</label>
+                  <p className="font-medium" style={{ color: '#f0eff0' }}>
+                    {agent.tone.charAt(0).toUpperCase() + agent.tone.slice(1)}
+                  </p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Language</label>
-                  <p className="text-gray-900 font-medium">{agent.language}</p>
+                  <label className="text-sm" style={{ color: '#71717a' }}>Language</label>
+                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.language}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Active Hours</label>
-                  <p className="text-gray-900 font-medium">{agent.active_hours || '9:00 AM - 9:00 PM'}</p>
+                  <label className="text-sm" style={{ color: '#71717a' }}>Active Hours</label>
+                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.active_hours || '9:00 AM - 9:00 PM'}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Integrations</h3>
+            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+              <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Integrations</h3>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4" />
+                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                  <input type="checkbox" defaultChecked className="w-4 h-4" style={{ accentColor: '#e879f9' }} />
                   <div>
-                    <p className="font-medium text-gray-900">WhatsApp</p>
-                    <p className="text-xs text-gray-500">Connected</p>
+                    <p className="font-medium" style={{ color: '#f0eff0' }}>WhatsApp</p>
+                    <p className="text-xs" style={{ color: '#71717a' }}>Connected</p>
                   </div>
                 </label>
-                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4" />
+                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                  <input type="checkbox" defaultChecked className="w-4 h-4" style={{ accentColor: '#e879f9' }} />
                   <div>
-                    <p className="font-medium text-gray-900">Email</p>
-                    <p className="text-xs text-gray-500">Connected</p>
+                    <p className="font-medium" style={{ color: '#f0eff0' }}>Email</p>
+                    <p className="text-xs" style={{ color: '#71717a' }}>Connected</p>
                   </div>
                 </label>
-                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4" />
+                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                  <input type="checkbox" className="w-4 h-4" style={{ accentColor: '#e879f9' }} disabled />
                   <div>
-                    <p className="font-medium text-gray-900">SMS</p>
-                    <p className="text-xs text-gray-500">Coming Soon</p>
+                    <p className="font-medium" style={{ color: '#f0eff0' }}>SMS</p>
+                    <p className="text-xs" style={{ color: '#71717a' }}>Coming Soon</p>
                   </div>
                 </label>
               </div>
             </div>
 
-            <div className="bg-red-50 rounded-lg border border-red-200 p-6">
-              <h3 className="font-bold text-red-900 mb-4">Danger Zone</h3>
+            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(239,71,111,0.3)', background: 'rgba(239,71,111,0.08)' }}>
+              <h3 className="font-bold mb-4" style={{ color: '#ff7a8a' }}>Danger Zone</h3>
               <button
                 onClick={deleteAgent}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition"
+                style={{ background: '#dc2626', color: '#fff' }}
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Agent
@@ -350,11 +374,11 @@ export default function AgentDetailPage() {
         {/* Sequences Tab */}
         {activeTab === 'sequences' && (
           <div className="max-w-2xl mx-auto p-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <Zap className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-600 font-medium">No sequences configured yet</p>
-              <p className="text-gray-500 text-sm mt-2">Create automated workflows for your agent</p>
-              <button className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+            <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+              <Zap className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
+              <p className="font-medium" style={{ color: '#f0eff0' }}>No sequences configured yet</p>
+              <p className="text-sm mt-2" style={{ color: '#71717a' }}>Create automated workflows for your agent</p>
+              <button className="mt-4 px-4 py-2 rounded-lg font-medium transition" style={{ background: '#e879f9', color: '#0c0c0d' }}>
                 + New Sequence
               </button>
             </div>
@@ -365,57 +389,57 @@ export default function AgentDetailPage() {
         {activeTab === 'analytics' && (
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm text-gray-600">WhatsApp Sent</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm" style={{ color: '#71717a' }}>WhatsApp Sent</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm text-gray-600">Emails Sent</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm" style={{ color: '#71717a' }}>Emails Sent</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm text-gray-600">Response Rate</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">0%</p>
+              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm" style={{ color: '#71717a' }}>Response Rate</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0%</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="font-bold text-gray-900 mb-4">Usage Limits</h3>
+              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Usage Limits</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">Calls</span>
-                      <span className="font-medium">0 / {agent.monthly_call_limit}</span>
+                      <span style={{ color: '#71717a' }}>Calls</span>
+                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_call_limit}</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full">
-                      <div className="h-full bg-blue-600 rounded-full" style={{ width: '0%' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">Emails</span>
-                      <span className="font-medium">0 / {agent.monthly_email_limit}</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full">
-                      <div className="h-full bg-blue-600 rounded-full" style={{ width: '0%' }} />
+                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">WhatsApp</span>
-                      <span className="font-medium">0 / {agent.monthly_whatsapp_limit}</span>
+                      <span style={{ color: '#71717a' }}>Emails</span>
+                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_email_limit}</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full">
-                      <div className="h-full bg-blue-600 rounded-full" style={{ width: '0%' }} />
+                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span style={{ color: '#71717a' }}>WhatsApp</span>
+                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_whatsapp_limit}</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="font-bold text-gray-900 mb-4">Recent Activity</h3>
-                <p className="text-gray-500 text-sm">No activity yet</p>
+              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Recent Activity</h3>
+                <p className="text-sm" style={{ color: '#71717a' }}>No activity yet</p>
               </div>
             </div>
           </div>
@@ -425,36 +449,36 @@ export default function AgentDetailPage() {
         {activeTab === 'contacts' && (
           <div className="max-w-4xl mx-auto p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-900">Agent Contacts</h3>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition">
+              <h3 className="font-bold" style={{ color: '#f0eff0' }}>Agent Contacts</h3>
+              <button className="px-4 py-2 rounded-lg font-medium text-sm transition" style={{ background: '#e879f9', color: '#0c0c0d' }}>
                 + Add Contact
               </button>
             </div>
 
             {contacts.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-600 font-medium">No contacts yet</p>
+              <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <Users className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
+                <p className="font-medium" style={{ color: '#f0eff0' }}>No contacts yet</p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
                 <table className="w-full">
-                  <thead className="border-b border-gray-200 bg-gray-50">
+                  <thead className="border-b" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Email</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Phone</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-gray-900">Consent</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Name</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Email</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Phone</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Consent</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                     {contacts.map(contact => (
-                      <tr key={contact.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-sm text-gray-900">{contact.name}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{contact.email || '-'}</td>
-                        <td className="px-6 py-3 text-sm text-gray-600">{contact.phone || '-'}</td>
+                      <tr key={contact.id} style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                        <td className="px-6 py-3 text-sm" style={{ color: '#f0eff0' }}>{contact.name}</td>
+                        <td className="px-6 py-3 text-sm" style={{ color: '#71717a' }}>{contact.email || '-'}</td>
+                        <td className="px-6 py-3 text-sm" style={{ color: '#71717a' }}>{contact.phone || '-'}</td>
                         <td className="px-6 py-3 text-sm">
-                          {contact.whatsapp_consent && <span className="text-green-600 font-medium">✓ WhatsApp</span>}
+                          {contact.whatsapp_consent && <span className="font-medium" style={{ color: '#10b981' }}>✓ WhatsApp</span>}
                         </td>
                       </tr>
                     ))}
@@ -468,11 +492,11 @@ export default function AgentDetailPage() {
         {/* Inbox Tab */}
         {activeTab === 'inbox' && (
           <div className="max-w-4xl mx-auto p-6">
-            <h3 className="font-bold text-gray-900 mb-6">Escalated Messages</h3>
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-600 font-medium">No escalated messages</p>
-              <p className="text-gray-500 text-sm mt-2">Messages that need human attention will appear here</p>
+            <h3 className="font-bold mb-6" style={{ color: '#f0eff0' }}>Escalated Messages</h3>
+            <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+              <Mail className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
+              <p className="font-medium" style={{ color: '#f0eff0' }}>No escalated messages</p>
+              <p className="text-sm mt-2" style={{ color: '#71717a' }}>Messages that need human attention will appear here</p>
             </div>
           </div>
         )}
