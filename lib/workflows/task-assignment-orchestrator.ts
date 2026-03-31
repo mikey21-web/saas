@@ -358,7 +358,7 @@ Output JSON with this format:
    * Main orchestration loop
    */
   async execute(input: WorkflowInput): Promise<WorkflowState> {
-    const state: WorkflowState = {
+    let state: WorkflowState = {
       input,
       errors: [],
     };
