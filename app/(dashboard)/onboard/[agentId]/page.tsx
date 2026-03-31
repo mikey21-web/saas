@@ -224,10 +224,10 @@ export default function OnboardPage() {
       }),
     })
 
-    const agentData = await agentRes.json() as { success: boolean; agentId: string }
-    if (!agentData.success) {
+    const agentData = await agentRes.json() as { success?: boolean; agentId?: string; error?: string }
+    if (!agentData.success || !agentData.agentId) {
       setIsDeploying(false)
-      alert('Failed to create agent')
+      alert(`Failed to create agent: ${agentData.error || 'Unknown error'}`)
       return
     }
 
@@ -280,15 +280,18 @@ export default function OnboardPage() {
         }),
       })
 
-      const data = await res.json() as { success: boolean; agentId: string; agentName: string }
+      const data = await res.json() as { success?: boolean; agentId?: string; agentName?: string; error?: string }
 
-      if (data.success) {
+      if (data.success && data.agentId) {
         router.push(
-          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName)}&icon=${encodeURIComponent(agentIcon)}`
+          `/onboard/success?agentId=${data.agentId}&agentName=${encodeURIComponent(data.agentName || 'Agent')}&icon=${encodeURIComponent(agentIcon)}`
         )
+      } else {
+        throw new Error(data.error || 'Deployment failed')
       }
     } catch (err) {
       console.error('Deploy failed:', err)
+      alert(`Deploy error: ${String(err)}`)
       setIsDeploying(false)
     }
   }
