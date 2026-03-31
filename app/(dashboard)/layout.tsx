@@ -1,9 +1,9 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { usePathname, useRouter } from "next/navigation";
+import { UserButton, useAuth } from "@clerk/nextjs";
 
 const sidebarItems = [
   { name: "Your Agents", href: "/dashboard", icon: "🤖" },
@@ -21,7 +21,23 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push("/sign-in");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="flex h-screen items-center justify-center" style={{ background: '#0c0c0d' }}>
+        <div style={{ color: '#71717a' }}>Loading...</div>
+      </div>
+    );
+  }
 
   const handlePauseAll = async () => {
     setIsPaused(!isPaused);

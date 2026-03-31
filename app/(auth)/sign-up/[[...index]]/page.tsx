@@ -6,7 +6,7 @@ export default function SignUpPage() {
       <SignUp
         redirectUrl="/dashboard"
         appearance={{
-          baseTheme: undefined,
+          baseTheme: "dark",
           elements: {
             rootBox: "w-full max-w-md",
             card: "bg-transparent",
