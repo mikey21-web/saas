@@ -30,18 +30,18 @@ export async function POST(request: NextRequest) {
           const plan = (session.metadata?.plan as 'intern' | 'agent') || 'agent'
 
           // Mark agent as deployed
-          const { error } = await supabaseAdmin
+          const { error } = await ((supabaseAdmin as any)
             .from('agents')
             .update({
               status: 'active',
               deployed_at: new Date().toISOString(),
             })
             .eq('id', agentId)
-            .eq('user_id', userId)
+            .eq('user_id', userId)) as any
 
           if (!error) {
             // Log activity
-            await supabaseAdmin.from('activity_logs').insert({
+            await ((supabaseAdmin as any).from('activity_logs').insert({
               user_id: userId,
               agent_id: agentId,
               action: 'payment_received',
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
                 amount: session.amount_total ? session.amount_total / 100 : 0,
                 currency: session.currency,
               },
-            })
+            })) as any
             console.log(`✓ Payment received for agent ${agentId}`)
           }
         }
