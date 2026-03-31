@@ -21,7 +21,7 @@ const mockProjects: Project[] = [
     agentCount: 3,
     status: 'active',
     createdDate: '1 week ago',
-    color: 'bg-blue-100',
+    color: 'bg-blue-500',
   },
   {
     id: 2,
@@ -30,7 +30,7 @@ const mockProjects: Project[] = [
     agentCount: 2,
     status: 'active',
     createdDate: '2 weeks ago',
-    color: 'bg-green-100',
+    color: 'bg-green-500',
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const mockProjects: Project[] = [
     agentCount: 4,
     status: 'active',
     createdDate: '3 weeks ago',
-    color: 'bg-purple-100',
+    color: 'bg-purple-500',
   },
   {
     id: 4,
@@ -48,7 +48,7 @@ const mockProjects: Project[] = [
     agentCount: 0,
     status: 'archived',
     createdDate: '2 months ago',
-    color: 'bg-gray-100',
+    color: 'bg-gray-600',
   },
 ]
 
@@ -68,79 +68,81 @@ export default function ProjectsPage() {
     <div>
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
+          <h1 className="text-3xl font-bold" style={{ color: '#f0eff0' }}>Projects</h1>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all" style={{ background: '#e879f9', color: '#0c0c0d' }}>
             <Plus size={16} />
             New Project
           </button>
         </div>
-        <p className="text-gray-600">Organize agents into projects for better team management</p>
+        <p style={{ color: '#71717a' }}>Organize agents into projects for better team management</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab('active')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'active'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            background: activeTab === 'active' ? '#e879f9' : 'rgba(255,255,255,0.05)',
+            color: activeTab === 'active' ? '#0c0c0d' : '#71717a',
+            border: activeTab === 'active' ? 'none' : '1px solid rgba(255,255,255,0.08)'
+          }}
         >
           Active ({projects.filter(p => p.status === 'active').length})
         </button>
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            background: activeTab === 'all' ? '#e879f9' : 'rgba(255,255,255,0.05)',
+            color: activeTab === 'all' ? '#0c0c0d' : '#71717a',
+            border: activeTab === 'all' ? 'none' : '1px solid rgba(255,255,255,0.08)'
+          }}
         >
           All ({projects.length})
         </button>
       </div>
 
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map(project => (
           <div
             key={project.id}
-            className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
+            className="rounded-2xl p-6 border transition-all hover:border-opacity-100"
+            style={{
+              borderColor: project.status === 'active' ? 'rgba(232,121,249,0.3)' : 'rgba(255,255,255,0.08)',
+              background: project.status === 'active' ? 'rgba(232,121,249,0.05)' : 'rgba(255,255,255,0.02)',
+            }}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div className={`w-12 h-12 ${project.color} rounded-lg flex items-center justify-center`}>
-                <Folder size={24} className={
-                  project.color === 'bg-blue-100' ? 'text-blue-600' :
-                  project.color === 'bg-green-100' ? 'text-green-600' :
-                  project.color === 'bg-purple-100' ? 'text-purple-600' :
-                  'text-gray-600'
-                } />
+                <Folder size={24} style={{ color: '#fff' }} />
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical size={18} className="text-gray-400" />
+              <button className="p-2 rounded-lg transition-colors" style={{ color: '#71717a' }}>
+                <MoreVertical size={18} />
               </button>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.name}</h3>
-            <p className="text-sm text-gray-600 mb-3">{project.description}</p>
+            <h3 className="text-lg font-semibold mb-1" style={{ color: '#f0eff0' }}>{project.name}</h3>
+            <p className="text-sm mb-4" style={{ color: '#71717a' }}>{project.description}</p>
 
-            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-              <span className="text-xs text-gray-500">{project.createdDate}</span>
-              <span className="text-sm font-medium text-gray-700">
+            <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <span className="text-xs" style={{ color: '#71717a' }}>{project.createdDate}</span>
+              <span className="text-sm font-medium" style={{ color: '#e879f9' }}>
                 {project.agentCount} agent{project.agentCount !== 1 ? 's' : ''}
               </span>
             </div>
 
             {project.status === 'archived' && (
-              <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded transition-colors">
+              <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium rounded transition-colors" style={{ color: '#e879f9', background: 'rgba(232,121,249,0.1)' }}>
                   <Archive size={14} />
                   Unarchive
                 </button>
                 <button
                   onClick={() => handleDelete(project.id)}
-                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium rounded transition-colors"
+                  style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)' }}
                 >
                   <Trash2 size={14} />
                   Delete
@@ -152,10 +154,10 @@ export default function ProjectsPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+        <div className="text-center py-12 rounded-2xl border" style={{ borderColor: 'rgba(232,121,249,0.3)', background: 'rgba(232,121,249,0.05)' }}>
           <p className="text-4xl mb-4">📁</p>
-          <p className="text-gray-600 mb-4">No projects yet</p>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
+          <p className="mb-4" style={{ color: '#71717a' }}>No projects yet</p>
+          <button className="px-4 py-2 rounded-lg font-medium text-sm transition-all" style={{ background: '#e879f9', color: '#0c0c0d' }}>
             Create Your First Project
           </button>
         </div>
