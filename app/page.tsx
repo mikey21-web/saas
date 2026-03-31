@@ -16,11 +16,39 @@ export default function Page() {
   const { isLoaded, isSignedIn } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.push('/dashboard')
-    }
-  }, [isLoaded, isSignedIn, router])
+  // Show dashboard for authenticated users
+  if (isLoaded && isSignedIn) {
+    return (
+      <main className="min-h-screen bg-[#0A0A0B] text-gray-200 overflow-x-hidden">
+        <Header />
+        <div className="p-8">
+          <div className="text-4xl font-bold mb-8">Welcome to diyaa.ai</div>
+          <div className="text-lg mb-4">
+            You're authenticated! Navigate to the dashboard using the sidebar to access your agents and workflows.
+          </div>
+          <div className="text-lg mb-4">
+            <strong>Quick Start:</strong> Go to <code className="bg-gray-800 px-2 py-1 rounded">/dashboard</code> to see your available agents and workflows.
+          </div>
+          <div className="text-lg">
+            <strong>Available Sections:</strong>
+            <ul className="ml-4 space-y-1">
+              <li>Your Agents</li>
+              <li>Agent Store</li>
+              <li>Workflows</li>
+              <li>Skills</li>
+              <li>Projects</li>
+              <li>Contacts</li>
+              <li>Inbox</li>
+              <li>Academy</li>
+              <li>Analytics</li>
+              <li>Billing</li>
+              <li>Settings</li>
+            </ul>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   // Show premium landing page for unauthenticated users
   if (isLoaded && !isSignedIn) {
