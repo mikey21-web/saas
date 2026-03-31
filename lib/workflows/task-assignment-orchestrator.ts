@@ -1,4 +1,4 @@
-import { Anthropic } from "@anthropic-sdk/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/lib/supabase/client";
 import { sendWhatsAppNotification, sendEmailNotification, logNotificationActivity } from "@/lib/channels/notifications";
 

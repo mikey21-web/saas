@@ -187,11 +187,11 @@ export async function POST(req: NextRequest) {
         })
 
         // 3. Verify agent status changed to active
-        const { data: agent } = await supabaseAdmin
+        const { data: agent } = (await supabaseAdmin
           .from('agents')
           .select('status, deployed_at')
           .eq('id', createResult.agentId)
-          .single()
+          .single()) as { data: { status: string } | null }
 
         const duration = Date.now() - startTime
         const passed = webhookResponse.ok && agent?.status === 'active'

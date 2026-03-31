@@ -33,14 +33,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Update agent status to active
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await ((supabaseAdmin as any)
       .from('agents')
       .update({
         status: 'active',
         deployed_at: new Date().toISOString(),
       })
       .eq('id', agentId)
-      .eq('user_id', userId)
+      .eq('user_id', userId)) as any
 
     if (updateError) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Log payment activity
     const paymentId = `mock_${provider}_${Date.now()}`
-    const { error: logError } = await supabaseAdmin
+    const { error: logError } = await ((supabaseAdmin as any)
       .from('activity_logs')
       .insert({
         user_id: userId,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
           mock: true,
           timestamp: new Date().toISOString(),
         },
-      })
+      })) as any
 
     if (logError) {
       console.warn('Activity log failed:', logError)

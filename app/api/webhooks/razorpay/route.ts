@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
         if (userId && agentId) {
           // Mark agent as deployed
-          await (supabaseAdmin
+          await ((supabaseAdmin as any)
             .from('agents')
             .update({
               status: 'active',
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
             .eq('user_id', userId)) as any
 
           // Log activity
-          await (supabaseAdmin
+          await ((supabaseAdmin as any)
             .from('activity_logs')
             .insert({
               user_id: userId,
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
       if (userId && agentId) {
         // Log failed payment
-        await (supabaseAdmin
+        await ((supabaseAdmin as any)
           .from('activity_logs')
           .insert({
             user_id: userId,

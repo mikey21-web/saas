@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface Task {
@@ -31,9 +29,6 @@ interface WorkflowResult {
 }
 
 export default function TaskAssignmentPage() {
-  const { user } = useUser()
-  const router = useRouter()
-
   const [agentId, setAgentId] = useState('')
   const [meetingNotes, setMeetingNotes] = useState('')
   const [teamMembers, setTeamMembers] = useState('')
@@ -43,10 +38,6 @@ export default function TaskAssignmentPage() {
   const [step, setStep] = useState<'input' | 'executing' | 'result'>('input')
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   const handleExecute = async () => {
     if (!agentId || !meetingNotes || !teamMembers) {

@@ -23,6 +23,7 @@ export default function TestDrivenDevelopmentPage() {
   const [selectedTest, setSelectedTest] = useState<string | null>(null)
 
   const runTest = async (testId: string) => {
+    setSelectedTest(testId)
     setTests(prev =>
       prev.map(t =>
         t.id === testId ? { ...t, status: 'running' } : t
