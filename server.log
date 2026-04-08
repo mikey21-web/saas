@@ -1,0 +1,416 @@
+
+> diyaa-ai@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.31.82:3000
+- Environments: .env.local
+✓ Ready in 824ms
+
+ GET / 200 in 6.0s (next.js: 3.4s, proxy.ts: 1775ms, application-code: 825ms)
+ GET / 200 in 3.0s (next.js: 1940ms, proxy.ts: 341ms, application-code: 707ms)
+ GET / 200 in 585ms (next.js: 70ms, proxy.ts: 72ms, application-code: 443ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="en"
+                          className="dark"
+-                         rtrvr-mw-busy="0"
+-                         rtrvr-mw-ready="1"
+-                         rtrvr-react="1"
+-                         rtrvr-gl-click="1"
+-                         rtrvr-gl-input="1"
+-                         rtrvr-gl-keydown="1"
+                        >
+                  ...
+ 
+    at <unknown> (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+○ Compiling /sign-in/[[...index]] ...
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="en"
+                          className="dark"
+-                         rtrvr-mw-busy="0"
+-                         rtrvr-mw-ready="1"
+-                         rtrvr-react="1"
+-                         rtrvr-gl-click="1"
+-                         rtrvr-gl-input="1"
+-                         rtrvr-gl-keydown="1"
+                        >
+                  ...
+ 
+    at <unknown> (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/TUMMA/OneDrive/Desktop/ai agents saas/diyaa-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+✓ Finished writing to filesystem cache in 22.1s
+Compaction failed: Failed to compact database
+
+Caused by:
+    0: Failed to merge database files for family 2
+    1: Failed to write compressed value block
+    2: Failed to write block data
+    3: Insufficient system resources exist to complete the requested service. (os error 1450)
+
+
+<--- Last few GCs --->
+
+<--- Last few GCs --->
+[50156:0000018F9E830000]     2217 ms: Scavenge 12.7 (17.6) -> 10.3 (18.9) MB, pooled: 0.0 MB, 2.67 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[50156:0000018F9E830000]     5021 ms: Scavenge 14.5 (18.9) -> 12.2 (20.1) MB, pooled: 0.0 MB, 99.90 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+[67272:00000238898FF000]     5683 ms: Scavenge 14.5 (18.9) -> 12.2 (19.7) MB, pooled: 0.0 MB, 51.44 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+[67272:00000238898FF000]     9005 ms: Scavenge 20.3 (25.6) -> 15.0 (26.9) MB, pooled: 0.0 MB, 13.82 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 1: 00007FF66E9F2CE6 node::OnFatalError+1318
+ 2: 00007FF66F590927 v8::Function::NewInstance+423
+ 3: 00007FF66EF4EE03 v8::SnapshotCreator::GetIsolate+57619
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 4: 00007FF66F2A60BB v8::Promise::MarkAsSilent+710379
+ 5: 00007FF66F2A5E5B v8::Promise::MarkAsSilent+709771
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 6: 00007FF66F585C5D v8::internal::ThreadIsolation::LookupJumpTableAllocations+657245
+ 7: 00007FF66F08E44C EC_KEY_METHOD_set_verify+304540
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 8: 00007FF66F08F8DB EC_KEY_METHOD_set_verify+309803
+ 1: 00007FF66E9F2CE6 
+ 9: 00007FF66F08EA9E EC_KEY_METHOD_set_verify+306158
+ 2: 00007FF66F590927 
+10: 00007FF66F08F306 EC_KEY_METHOD_set_verify+308310
+ 3: 00007FF66EF4EE03 
+11: 00007FF66F08EAE4 EC_KEY_METHOD_set_verify+306228
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 4: 00007FF66EDD87CE 
+12: 00007FF66F094624 EC_KEY_METHOD_set_verify+329588
+ 5: 00007FF66EDD8441 
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+13: 00007FF66F09FC2F EC_KEY_METHOD_set_verify+376191
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 6: 00007FF66EDC85D5 
+14: 00007FF66F08889B EC_KEY_METHOD_set_verify+281067
+ 7: 00007FF66ED89405 
+15: 00007FF66F087D5A EC_KEY_METHOD_set_verify+278186
+Compaction failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+ 8: 00007FF66ED99AE2 
+16: 00007FF66F07B02F EC_KEY_METHOD_set_verify+225663
+ 9: 00007FF66EDCB54B 
+17: 00007FF66F07A154 EC_KEY_METHOD_set_verify+221860
+10: 00007FF66EE2426E 
+18: 00007FF66F079316 EC_KEY_METHOD_set_verify+218214
+11: 00007FF66EE222F7 
+19: 00007FF66F078F6A EC_KEY_METHOD_set_verify+217274
+12: 00007FF66F51E17F 
+20: 00007FF66F074629 EC_KEY_METHOD_set_verify+198521
+13: 00007FF66EE23CA2 
+21: 00007FF66F52678F v8::internal::ThreadIsolation::LookupJumpTableAllocations+266895
+14: 00007FF66FE0B65F 
+22: 00007FF66F529DD8 v8::internal::ThreadIsolation::LookupJumpTableAllocations+280792
+15: 00007FF66E94229E 
+23: 00007FF66F598EEB v8::ScriptCompiler::CompileFunction+1035
+16: 00007FF66F5E7586 
+24: 00007FF66EA101B0 node::GetCurrentEnvironment+21120
+17: 00007FF670B48433 
+25: 00007FF66EA0E966 node::GetCurrentEnvironment+14902
+18: 00007FFEC05DE8D7 BaseThreadInitThunk+23
+26: 0000018FD6E9014D 
+19: 00007FFEC1CAC48C RtlUserThreadStart+44
+
+
+#
+# Fatal error in , line 0
+# Out of memory: HashMap::Initialize
+#
+#
+#
+#FailureMessage Object: 000000AF3CDF87C0
+----- Native stack trace -----
+
+ 1: 00007FF66E94647D node::MultiIsolatePlatform::DisposeIsolate+5341
+ 2: 00007FF66FDA500F V8_Fatal+287
+ 3: 00007FF66F58E9DF v8::internal::ThreadIsolation::LookupJumpTableAllocations+693471
+ 4: 00007FF66F58E19B v8::internal::ThreadIsolation::LookupJumpTableAllocations+691355
+ 5: 00007FF66F58DFD7 v8::internal::ThreadIsolation::LookupJumpTableAllocations+690903
+ 6: 00007FF66F05774F EC_KEY_METHOD_set_verify+80031
+ 7: 00007FF66F0784B6 EC_KEY_METHOD_set_verify+214534
+ 8: 00007FF66F08F8DB EC_KEY_METHOD_set_verify+309803
+ 9: 00007FF66F08EA9E EC_KEY_METHOD_set_verify+306158
+10: 00007FF66F08E759 EC_KEY_METHOD_set_verify+305321
+11: 00007FF66F097200 EC_KEY_METHOD_set_verify+340816
+12: 00007FF66F08E209 EC_KEY_METHOD_set_verify+303961
+13: 00007FF66F08F8DB EC_KEY_METHOD_set_verify+309803
+14: 00007FF66F08EA9E EC_KEY_METHOD_set_verify+306158
+15: 00007FF66F08E759 EC_KEY_METHOD_set_verify+305321
+16: 00007FF66F097200 EC_KEY_METHOD_set_verify+340816
+17: 00007FF66F08E209 EC_KEY_METHOD_set_verify+303961
+18: 00007FF66F08F8DB EC_KEY_METHOD_set_verify+309803
+19: 00007FF66F08EA9E EC_KEY_METHOD_set_verify+306158
+20: 00007FF66F08E759 EC_KEY_METHOD_set_verify+305321
+21: 00007FF66F097200 EC_KEY_METHOD_set_verify+340816
+22: 00007FF66F08E209 EC_KEY_METHOD_set_verify+303961
+23: 00007FF66F08F8DB EC_KEY_METHOD_set_verify+309803
+24: 00007FF66F08EA9E EC_KEY_METHOD_set_verify+306158
+25: 00007FF66F08F306 EC_KEY_METHOD_set_verify+308310
+26: 00007FF66F08EAE4 EC_KEY_METHOD_set_verify+306228
+27: 00007FF66F094624 EC_KEY_METHOD_set_verify+329588
+28: 00007FF66F09FC2F EC_KEY_METHOD_set_verify+376191
+29: 00007FF66F08889B EC_KEY_METHOD_set_verify+281067
+30: 00007FF66F087D5A EC_KEY_METHOD_set_verify+278186
+31: 00007FF66F07B02F EC_KEY_METHOD_set_verify+225663
+32: 00007FF66F07A154 EC_KEY_METHOD_set_verify+221860
+33: 00007FF66F079316 EC_KEY_METHOD_set_verify+218214
+34: 00007FF66F078F6A EC_KEY_METHOD_set_verify+217274
+35: 00007FF66F074629 EC_KEY_METHOD_set_verify+198521
+36: 00007FF66F52678F v8::internal::ThreadIsolation::LookupJumpTableAllocations+266895
+37: 00007FF66F529DD8 v8::internal::ThreadIsolation::LookupJumpTableAllocations+280792
+38: 00007FF66F598EEB v8::ScriptCompiler::CompileFunction+1035
+39: 00007FF66EA101B0 node::GetCurrentEnvironment+21120
+40: 00007FF66EA0E966 node::GetCurrentEnvironment+14902
+41: 00000297F23D014D 
+
+<--- Last few GCs --->
+
+[67536:000001FC0EAC0000]     2787 ms: Scavenge 14.5 (19.2) -> 12.3 (20.7) MB, pooled: 0.0 MB, 1.07 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[67536:000001FC0EAC0000]     3175 ms: Scavenge 20.3 (25.1) -> 15.0 (26.6) MB, pooled: 0.0 MB, 9.30 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+
+<--- Last few GCs --->
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+
+<--- Last few GCs --->
+----- Native stack trace -----
+[16412:000002D4C02B0000]     1218 ms: Scavenge 12.7 (17.7) -> 10.3 (18.7) MB, pooled: 0.0 MB, 4.88 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+
+[16412:000002D4C02B0000]     3868 ms: Scavenge 14.5 (18.9) -> 12.2 (20.4) MB, pooled: 0.0 MB, 2038.93 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[71852:000001ED8C0C8000]     1741 ms: Scavenge 21.6 (30.9) -> 15.8 (32.6) MB, pooled: 0.0 MB, 2.94 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+[71852:000001ED8C0C8000]     5267 ms: Scavenge 23.3 (32.9) -> 17.0 (33.4) MB, pooled: 0.0 MB, 3027.49 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+FATAL ERROR: Zone Allocation failed - process out of memory
+
+----- Native stack trace -----
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+ 1: 00007FF66E9F2CE6 
+----- Native stack trace -----
+
+ 2: 00007FF66F590927 
+ 3: 00007FF66EF4EE03 
+ 4: 00007FF67072493D 
+ 5: 00007FF6707247A0 
+ 6: 00007FF67010040A 
+ 7: 00007FF6700D5AED 
+ 8: 00007FF6700D2847 
+ 9: 00007FF6700D2131 
+10: 00007FF66F51E17F 
+11: 00007FF66F4DF413 
+12: 00007FF66F4E09BE 
+13: 00007FF66FE0B65F 
+14: 00007FF66E94229E 
+15: 00007FF66F5E7586 
+16: 00007FF670B48433 
+17: 00007FFEC05DE8D7 BaseThreadInitThunk+23
+18: 00007FFEC1CAC48C RtlUserThreadStart+44
+ 1: 00007FF66E9F2CE6 node::OnFatalError+1318
+ 2: 00007FF66F590927 v8::Function::NewInstance+423
+ 3: 00007FF66EF4EE03 v8::SnapshotCreator::GetIsolate+57619
+ 4: 00007FF66EDD20C5 X509_STORE_CTX_set_verify_cb+404181
+ 5: 00007FF66ED719B2 X509_STORE_CTX_set_verify_cb+9154
+ 6: 00007FF66EDCB337 X509_STORE_CTX_set_verify_cb+376135
+ 7: 00007FF66EE2426E X509_STORE_CTX_set_verify_cb+740478
+ 8: 00007FF66EE222F7 X509_STORE_CTX_set_verify_cb+732423
+ 9: 00007FF66F51E17F v8::internal::ThreadIsolation::LookupJumpTableAllocations+232575
+10: 00007FF66EE23CA2 X509_STORE_CTX_set_verify_cb+738994
+11: 00007FF66FE0B65F v8::platform::DefaultJobHandle::UpdatePriority+591
+12: 00007FF66E94229E v8::base::VirtualAddressSubspace::ActiveMemoryProtectionKey+34606
+13: 00007FF66F5E7586 uv_thread_detach+150
+14: 00007FF670B48433 v8::platform::DelayedTaskQueue::Terminate+10592099
+15: 00007FFEC05DE8D7 BaseThreadInitThunk+23
+16: 00007FFEC1CAC48C RtlUserThreadStart+44
+
+<--- Last few GCs --->
+
+[59808:0000022EBD040000]    10515 ms: Scavenge 21.6 (30.9) -> 15.9 (32.4) MB, pooled: 0.0 MB, 15.56 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[59808:0000022EBD040000]    12314 ms: Scavenge 23.3 (32.4) -> 17.0 (33.1) MB, pooled: 0.0 MB, 14.22 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF66E9F2CE6 
+ 2: 00007FF66F590927 
+ 3: 00007FF66EF4EE03 
+ 4: 00007FF66ED5B996 
+ 5: 00007FF66ED5B956 
+ 6: 00007FF66ED5B968 
+ 7: 00007FF66ED5BF53 
+ 8: 00007FF66ED5BCF1 
+ 9: 00007FF66ED566CF 
+10: 00007FF66ED6E244 
+11: 00007FF66ED99739 
+12: 00007FF66ED9B283 
+13: 00007FF66ED9A732 
+14: 00007FF66EDAFF9F 
+15: 00007FF66ED82B8C 
+16: 00007FF66ED9DD59 
+17: 00007FF66EDB14AA 
+18: 00007FF66EDB267A 
+19: 00007FF66ED896C6 
+20: 00007FF66ED99AE2 
+21: 00007FF66EDCB54B 
+22: 00007FF66EE2426E 
+23: 00007FF66EE222F7 
+24: 00007FF66F51E17F 
+25: 00007FF66EE23CA2 
+26: 00007FF66FE0B65F 
+27: 00007FF66E94229E 
+28: 00007FF66F5E7586 
+29: 00007FF670B48433 
+30: 00007FFEC05DE8D7 
+31: 00007FFEC1CAC48C 
+
+<--- Last few GCs --->
+
+[66772:0000022552001000]     4911 ms: Scavenge 10.0 (13.0) -> 8.9 (13.8) MB, pooled: 0.0 MB, 1.03 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[66772:0000022552001000]     4981 ms: Scavenge 11.1 (13.9) -> 9.9 (14.4) MB, pooled: 0.0 MB, 0.89 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[66772:0000022552001000]     6121 ms: Scavenge 13.9 (16.9) -> 11.3 (17.4) MB, pooled: 0.0 MB, 1.84 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: AlignedAlloc Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF66E9F2CE6 
+ 2: 00007FF66F590927 
+ 3: 00007FF66EF51F6C 
+ 4: 00007FF66F0C75DB 
+ 5: 00007FF66F0C5D98 
+ 6: 00007FF66F3DD557 
+ 7: 00007FF66F3C4FFE 
+ 8: 00007FF66F2650F6 
+ 9: 00007FF66F269426 
+10: 00007FF66F26C06C 
+11: 00007FF66F2649ED 
+12: 00007FF66F264744 
+13: 00007FF66F545B3D 
+14: 000002251FE7B43A 
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Compaction failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+<--- Last few GCs --->
+
+[66480:00000266504AE000]      394 ms: Scavenge 12.7 (17.9) -> 10.4 (18.9) MB, pooled: 0.0 MB, 0.83 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+[66480:00000266504AE000]     1487 ms: Scavenge 14.5 (19.1) -> 12.2 (20.4) MB, pooled: 0.0 MB, 1002.82 / 0.00 ms (average mu = 1.000, current mu = 1.000) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+ 1: 00007FF66E9F2CE6 node::OnFatalError+1318
+ 2: 00007FF66F590927 v8::Function::NewInstance+423
+ 3: 00007FF66EF4EE03 v8::SnapshotCreator::GetIsolate+57619
+ 4: 00007FF66F2A559B v8::Promise::MarkAsSilent+707531
+ 5: 00007FF66F290BB7 v8::Promise::MarkAsSilent+623079
+ 6: 00007FF66F28A5E3 v8::Promise::MarkAsSilent+597011
+ 7: 00007FF66F28A4A1 v8::Promise::MarkAsSilent+596689
+ 8: 00007FF66F286DAB v8::Promise::MarkAsSilent+582619
+ 9: 00007FF66F28694F v8::Promise::MarkAsSilent+581503
+10: 00007FF66F28652F v8::Promise::MarkAsSilent+580447
+11: 00007FF66F27D550 v8::Promise::MarkAsSilent+543616
+12: 00007FF66F52F4FF v8::internal::ThreadIsolation::LookupJumpTableAllocations+303103
+13: 00007FF66F525A48 v8::internal::ThreadIsolation::LookupJumpTableAllocations+263496
+14: 00007FF66F526B94 v8::internal::ThreadIsolation::LookupJumpTableAllocations+267924
+15: 00007FF66F529DD8 v8::internal::ThreadIsolation::LookupJumpTableAllocations+280792
+16: 00007FF66F598EEB v8::ScriptCompiler::CompileFunction+1035
+17: 00007FF66EA101B0 node::GetCurrentEnvironment+21120
+18: 00007FF66EA0E966 node::GetCurrentEnvironment+14902
+19: 000002661FDD014D 
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+[?25h
+^C

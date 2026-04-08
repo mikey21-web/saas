@@ -1,566 +1,671 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import type { ElementType } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
-import { supabase } from '@/lib/supabase/client'
-import { MessageCircle, Settings, Zap, BarChart3, Users, Mail, ArrowLeft, Pause, Play, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import {
+  AlertCircle,
+  ArrowLeft,
+  Bot,
+  Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  Cpu,
+  FileText,
+  Loader2,
+  Mail,
+  MessageSquare,
+  PlayCircle,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
+import { authFetch } from '@/lib/auth/client'
 
-interface Agent {
-  id: string
-  user_id: string
-  name: string
-  business_name: string
-  industry: string
-  tone: string
-  language: string
-  status: 'active' | 'paused'
-  icon?: string
-  active_hours?: string
-  monthly_call_limit: number
-  monthly_email_limit: number
-  monthly_whatsapp_limit: number
-  created_at: string
+type PreviewCard = {
+  title: string
+  body: string
 }
 
-interface Contact {
+type SimulationExample = {
+  title: string
+  trigger: string
+  outcome: string
+}
+
+type RoiSummary = {
+  weeklyHours?: string
+  monthlyHours?: string
+  responseTime?: string
+  automationCoverage?: string
+} | null
+
+type ActivityItem = {
+  id?: string
+  title: string
+  detail: string
+  status: 'queued' | 'in_progress' | 'ready'
+  icon: ElementType
+}
+
+type PersistedBootTask = {
+  id: string
+  created_at: string
+  title: string
+  detail: string
+  status: 'queued' | 'in_progress' | 'ready'
+  source: string
+}
+
+type AgentMetadata = {
+  type?: 'intern' | 'agent'
+  role?: string
+  goal?: string
+  websiteUrl?: string
+  owner?: {
+    name?: string
+    email?: string
+  }
+  connectedTools?: string[]
+  integrationDetails?: Record<string, string>
+  channels?: string[]
+  languages?: string
+  mustDo?: string
+  mustAvoid?: string
+  approvalRules?: string
+  autonomyLevel?: string
+  successMetric?: string
+  importantPeople?: string
+  previewCards?: PreviewCard[]
+  simulationExamples?: SimulationExample[]
+  roiSummary?: RoiSummary
+  dayOneTasks?: string[]
+}
+
+interface AgentRecord {
   id: string
   name: string
-  email?: string
-  phone?: string
-  whatsapp_consent: boolean
-  email_consent: boolean
-  sms_consent: boolean
-  call_consent: boolean
+  description?: string
+  business_name?: string
+  business_industry?: string
+  agent_type: string
+  status: string
+  channels_whatsapp?: boolean
+  channels_email?: boolean
+  channels_phone?: boolean
+  channels_sms?: boolean
+  tone?: string
+  created_at: string
+  deployed_at?: string
+  metadata?: AgentMetadata | null
+}
+
+function titleCase(value: string) {
+  return value
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }
 
 export default function AgentDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useUser()
   const agentId = params.id as string
 
-  const [activeTab, setActiveTab] = useState('chat')
-  const [agent, setAgent] = useState<Agent | null>(null)
-  const [contacts, setContacts] = useState<Contact[]>([])
+  const [agent, setAgent] = useState<AgentRecord | null>(null)
+  const [bootTasks, setBootTasks] = useState<PersistedBootTask[]>([])
   const [loading, setLoading] = useState(true)
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
-  const [inputValue, setInputValue] = useState('')
-  const [isSending, setIsSending] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
-    loadAgent()
-  }, [user, agentId])
+    async function loadAgent() {
+      try {
+        setLoading(true)
+        setError(null)
 
-  const loadAgent = async () => {
-    if (!user) return
-    try {
-      const { data: agentData, error } = await (supabase as any)
-        .from('agents')
-        .select('*')
-        .eq('id', agentId)
-        .eq('user_id', user.id)
-        .single()
-
-      if (error) throw error
-      setAgent(agentData)
-
-      // Load contacts for this agent
-      const { data: contactsData } = await (supabase as any)
-        .from('contacts')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (contactsData) setContacts(contactsData)
-    } catch (err) {
-      console.error('Failed to load agent:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const sendMessage = async () => {
-    if (!inputValue.trim() || !agent || isSending) return
-
-    setIsSending(true)
-    const messageContent = inputValue
-    const userMessage = { role: 'user' as const, content: messageContent }
-    setMessages(prev => [...prev, userMessage])
-    setInputValue('')
-
-    try {
-      // Send to streaming API endpoint
-      const res = await fetch(`/api/agents/${agentId}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: messageContent,
-          channel: 'whatsapp',
-          conversationId: `conv_${agentId}_${Date.now()}`,
-        }),
-      })
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-
-      // Add placeholder for assistant response
-      let assistantMessageIndex = -1
-      setMessages(prev => {
-        assistantMessageIndex = prev.length
-        return [...prev, { role: 'assistant', content: '' }]
-      })
-
-      // Read the SSE stream
-      const reader = res.body?.getReader()
-      if (!reader) throw new Error('No response body')
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let fullContent = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-
-          const data = line.slice(6)
-          if (data === '[DONE]') continue
-
-          try {
-            const parsed = JSON.parse(data) as { type?: string; content?: string; error?: string }
-
-            if (parsed.type === 'chunk' && parsed.content) {
-              fullContent += parsed.content
-              // Update the assistant message in real-time
-              setMessages(prev => {
-                const updated = [...prev]
-                if (assistantMessageIndex >= 0) {
-                  updated[assistantMessageIndex] = {
-                    role: 'assistant',
-                    content: fullContent,
-                  }
-                }
-                return updated
-              })
-            } else if (parsed.type === 'error') {
-              throw new Error(parsed.error || 'Unknown error')
-            }
-          } catch (e) {
-            if (e instanceof Error && !e.message.includes('JSON')) {
-              throw e
-            }
-          }
+        const res = await authFetch(`/api/agents/${agentId}`)
+        if (!res.ok) {
+          throw new Error('Failed to load agent')
         }
+
+        const data = (await res.json()) as {
+          agent?: AgentRecord
+          bootTasks?: PersistedBootTask[]
+          error?: string
+        }
+        if (!data.agent) {
+          throw new Error(data.error || 'Agent not found')
+        }
+
+        setAgent(data.agent)
+        setBootTasks(Array.isArray(data.bootTasks) ? data.bootTasks : [])
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Failed to load agent')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (agentId) {
+      void loadAgent()
+    }
+  }, [agentId])
+
+  const metadata = (agent?.metadata || {}) as AgentMetadata
+  const connectedTools = metadata.connectedTools || []
+  const previewCards = metadata.previewCards || []
+  const simulationExamples = metadata.simulationExamples || []
+  const roiSummary = metadata.roiSummary || null
+  const dayOneTasks = metadata.dayOneTasks || []
+  const channels = metadata.channels || deriveChannels(agent)
+  const typeLabel = metadata.type ? titleCase(metadata.type) : 'Agent'
+  const roleLabel = metadata.role ? titleCase(metadata.role) : titleCase(agent?.agent_type || 'agent')
+
+  const valueHeadline = useMemo(() => {
+    if (!agent) return ''
+    if (metadata.goal) return metadata.goal
+    if (agent.description) return agent.description
+    return 'Ready to start doing useful work.'
+  }, [agent, metadata.goal])
+
+  const nowWorkingItems = useMemo<ActivityItem[]>(() => {
+    if (!agent) return []
+
+    if (bootTasks.length > 0) {
+      return bootTasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        detail: task.detail,
+        status: task.status,
+        icon: iconForBootTask(task.source),
+      }))
+    }
+
+    const items: ActivityItem[] = []
+    const integrationEntries = Object.entries(metadata.integrationDetails || {}).filter(([, value]) =>
+      Boolean(value?.trim())
+    )
+
+    if (integrationEntries.length > 0) {
+      const [key, value] = integrationEntries[0]
+      items.push({
+        title: `Connecting ${titleCase(key)}`,
+        detail: `Using ${value} as the live context source for this worker.`,
+        status: 'ready',
+        icon: Mail,
+      })
+    }
+
+    if (metadata.goal) {
+      items.push({
+        title: 'Prioritizing the main outcome',
+        detail: metadata.goal,
+        status: 'in_progress',
+        icon: Briefcase,
+      })
+    }
+
+    if (metadata.successMetric) {
+      items.push({
+        title: 'Tracking success',
+        detail: `Success is being measured against: ${metadata.successMetric}`,
+        status: 'queued',
+        icon: Sparkles,
+      })
+    }
+
+    if (dayOneTasks.length > 0) {
+      dayOneTasks.slice(0, 2).forEach((task, index) => {
+        items.push({
+          title: index === 0 ? 'Starting first-hour task' : 'Lining up next task',
+          detail: task,
+          status: index === 0 ? 'in_progress' : 'queued',
+          icon: PlayCircle,
+        })
+      })
+    }
+
+    if (metadata.mustDo) {
+      items.push({
+        title: 'Applying operating instructions',
+        detail: metadata.mustDo,
+        status: 'ready',
+        icon: FileText,
+      })
+    }
+
+    return items.slice(0, 5)
+  }, [agent, bootTasks, dayOneTasks, metadata.goal, metadata.integrationDetails, metadata.mustDo, metadata.successMetric])
+
+  async function handleDeleteAgent() {
+    if (!confirm('Are you sure you want to delete this agent? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      setDeleting(true)
+      setError(null)
+
+      const res = await authFetch(`/api/agents/${agentId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to delete agent')
       }
 
-      if (!fullContent) {
-        throw new Error('No response from agent')
-      }
-    } catch (err) {
-      console.error('Chat error:', err)
-      const errorMsg = err instanceof Error ? err.message : 'Failed to get response'
-      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${errorMsg}` }])
+      router.push('/agents')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete agent')
     } finally {
-      setIsSending(false)
+      setDeleting(false)
     }
   }
 
-  const toggleAgentStatus = async () => {
-    if (!agent) return
-    try {
-      const newStatus = agent.status === 'active' ? 'paused' : 'active'
-      const { error } = await (supabase as any)
-        .from('agents')
-        .update({ status: newStatus })
-        .eq('id', agentId)
-        .eq('user_id', user?.id)
-
-      if (error) throw error
-      setAgent({ ...agent, status: newStatus })
-    } catch (err) {
-      console.error('Failed to toggle status:', err)
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-coral-500 animate-spin" />
+          <p className="text-gray-600">Loading worker...</p>
+        </div>
+      </div>
+    )
   }
 
-  const deleteAgent = async () => {
-    if (!agent || !confirm('Are you sure? This cannot be undone.')) return
-    try {
-      const { error } = await (supabase as any)
-        .from('agents')
-        .delete()
-        .eq('id', agentId)
-        .eq('user_id', user?.id)
-
-      if (error) throw error
-      router.push('/dashboard')
-    } catch (err) {
-      console.error('Failed to delete agent:', err)
-    }
+  if (!agent) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <AlertCircle className="w-12 h-12 text-red-500" />
+        <h2 className="text-xl font-bold text-gray-900">Agent not found</h2>
+        <p className="text-gray-600">The worker you&apos;re looking for doesn&apos;t exist.</p>
+        <Link href="/agents" className="text-coral-500 hover:text-coral-600 font-medium">
+          Back to agents
+        </Link>
+      </div>
+    )
   }
-
-  if (loading) return <div className="p-8">Loading...</div>
-  if (!agent) return <div className="p-8">Agent not found</div>
-
-  const tabs = [
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'sequences', label: 'Sequences', icon: Zap },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'contacts', label: 'Contacts', icon: Users },
-    { id: 'inbox', label: 'Inbox', icon: Mail },
-  ]
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#0c0c0d' }}>
-      {/* Header */}
-      <div className="border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(22,22,24,0.4)', backdropFilter: 'blur(10px)' }}>
-        <div className="flex items-center gap-3">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start gap-3">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-lg transition"
-            style={{ background: 'rgba(255,255,255,0.05)', color: '#f0eff0' }}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{agent.icon || '🤖'}</span>
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#f0eff0' }}>{agent.name}</h1>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                agent.status === 'active'
-                  ? 'bg-green-600/20 text-green-400'
-                  : 'bg-gray-600/20 text-gray-400'
-              }`}>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-coral-50 text-coral-700 text-xs font-semibold mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              {typeLabel} worker
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">{agent.name}</h1>
+            <p className="text-gray-600 mt-2 max-w-3xl">{valueHeadline}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/create-agent"
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Create another
+          </Link>
+          <button
+            onClick={handleDeleteAgent}
+            disabled={deleting}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 disabled:opacity-50"
+          >
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">What this worker is set up to do</div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Visible value, based on the setup captured at deploy time.
+                </div>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${agent.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
                 {agent.status}
               </span>
             </div>
-            <p className="text-sm" style={{ color: '#71717a' }}>{agent.business_name} • {agent.industry}</p>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <TopCard
+                icon={Briefcase}
+                label="Role"
+                value={roleLabel}
+                subtext={metadata.autonomyLevel ? titleCase(metadata.autonomyLevel) : 'Configured'}
+              />
+              <TopCard
+                icon={Mail}
+                label="Channels"
+                value={channels.length > 0 ? channels.join(', ') : 'Not configured'}
+                subtext={`${connectedTools.length} connected tool${connectedTools.length === 1 ? '' : 's'}`}
+              />
+              <TopCard
+                icon={CalendarDays}
+                label="Deployed"
+                value={new Date(agent.deployed_at || agent.created_at).toLocaleDateString()}
+                subtext={agent.business_name || 'Custom setup'}
+              />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleAgentStatus}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition"
-            style={{ background: '#e879f9', color: '#0c0c0d' }}
-          >
-            {agent.status === 'active' ? (
-              <>
-                <Pause className="w-4 h-4" />
-                Pause
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" />
-                Resume
-              </>
-            )}
-          </button>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="border-b px-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-        <div className="flex gap-0">
-          {tabs.map(tab => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-4 font-medium text-sm flex items-center gap-2 border-b-2 transition ${
-                  isActive
-                    ? 'border-b-2'
-                    : 'border-transparent'
-                }`}
-                style={{
-                  color: isActive ? '#e879f9' : '#71717a',
-                  borderColor: isActive ? '#e879f9' : 'transparent'
-                }}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Chat Tab */}
-        {activeTab === 'chat' && (
-          <div className="flex flex-col h-full max-w-4xl mx-auto">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full" style={{ color: '#71717a' }}>
-                  <MessageCircle className="w-12 h-12 mb-2 opacity-50" />
-                  <p>Start a conversation with your agent</p>
-                </div>
-              ) : (
-                messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-3 rounded-lg ${
-                        msg.role === 'user'
-                          ? 'rounded-br-none'
-                          : 'rounded-bl-none'
-                      }`}
-                      style={{
-                        background: msg.role === 'user' ? '#e879f9' : 'rgba(255,255,255,0.05)',
-                        color: msg.role === 'user' ? '#0c0c0d' : '#f0eff0',
-                        border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      {msg.content}
-                    </div>
+          {previewCards.length > 0 && (
+            <section className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8">
+              <SectionHeader
+                title="Value Preview"
+                description="These are the operating promises captured during setup."
+              />
+              <div className="grid gap-4 lg:grid-cols-3 mt-6">
+                {previewCards.map((card) => (
+                  <div key={card.title} className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                    <div className="text-sm font-semibold text-gray-900 mb-2">{card.title}</div>
+                    <p className="text-sm text-gray-600 leading-6">{card.body}</p>
                   </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {simulationExamples.length > 0 && (
+            <section className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8">
+              <SectionHeader
+                title="What It Will Do In Practice"
+                description="Concrete examples of how this worker should behave in real situations."
+              />
+              <div className="grid gap-4 lg:grid-cols-3 mt-6">
+                {simulationExamples.map((example) => (
+                  <div key={example.title} className="rounded-2xl border border-gray-200 bg-white p-5">
+                    <div className="text-sm font-semibold text-gray-900 mb-2">{example.title}</div>
+                    <div className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">Trigger</div>
+                    <p className="text-sm text-gray-600 leading-6 mb-4">{example.trigger}</p>
+                    <div className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">Expected action</div>
+                    <p className="text-sm text-gray-700 leading-6">{example.outcome}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8">
+            <SectionHeader
+              title="Now Working"
+              description="A live-feeling view of what this worker should be doing immediately after deploy."
+            />
+            <div className="space-y-3 mt-6">
+              {nowWorkingItems.length > 0 ? (
+                nowWorkingItems.map((item) => (
+                  <ActivityRow
+                    key={item.id || `${item.title}-${item.detail}`}
+                    icon={item.icon}
+                    title={item.title}
+                    detail={item.detail}
+                    status={item.status}
+                  />
                 ))
+              ) : (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                  Add more context and integrations during setup to generate immediate work here.
+                </div>
               )}
             </div>
+          </section>
 
-            <div className="border-t p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(22,22,24,0.4)' }}>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={e => setInputValue(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && sendMessage()}
-                  placeholder="Type your message..."
-                  className="flex-1 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 transition"
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#f0eff0'
-                  }}
-                  disabled={isSending}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!inputValue.trim() || isSending}
-                  className="px-6 py-2 rounded-lg font-medium transition"
-                  style={{
-                    background: !inputValue.trim() || isSending ? '#71717a' : '#e879f9',
-                    color: !inputValue.trim() || isSending ? '#0c0c0d' : '#0c0c0d'
-                  }}
-                >
-                  {isSending ? '...' : 'Send'}
-                </button>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <InfoPanel
+              title="Connected Context"
+              description="What this worker can use to make better decisions."
+              items={buildContextItems(agent, metadata)}
+            />
+            <InfoPanel
+              title="Guardrails"
+              description="The rules that make this safe and reliable."
+              items={[
+                metadata.mustDo || 'No primary instruction saved yet',
+                metadata.mustAvoid || 'No strict avoid rule saved yet',
+                metadata.approvalRules || 'No approval rules saved yet',
+              ]}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 space-y-5">
+            <SectionHeader
+              title="Day-One Payoff"
+              description="What the user should feel immediately after deploy."
+            />
+
+            {roiSummary ? (
+              <div className="grid grid-cols-3 gap-3">
+                <MetricCard label="Weekly" value={`${roiSummary.weeklyHours || '0'}h`} />
+                <MetricCard label="Monthly" value={`${roiSummary.monthlyHours || '0'}h`} />
+                <MetricCard label="Response" value={shortResponse(roiSummary.responseTime)} />
               </div>
+            ) : null}
+
+            <div className="space-y-3 text-sm text-gray-700">
+              {roiSummary?.automationCoverage && (
+                <SummaryLine icon={ShieldCheck} text={`Coverage: ${roiSummary.automationCoverage}`} />
+              )}
+              {metadata.successMetric && (
+                <SummaryLine icon={Sparkles} text={`Success metric: ${metadata.successMetric}`} />
+              )}
+              <SummaryLine icon={Cpu} text={`Model behavior: ${agent.tone || 'professional'} tone`} />
             </div>
           </div>
-        )}
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className="max-w-2xl mx-auto p-6 space-y-6">
-            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-              <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Agent Configuration</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm" style={{ color: '#71717a' }}>Business Name</label>
-                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.business_name}</p>
-                </div>
-                <div>
-                  <label className="text-sm" style={{ color: '#71717a' }}>Industry</label>
-                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.industry}</p>
-                </div>
-                <div>
-                  <label className="text-sm" style={{ color: '#71717a' }}>Tone</label>
-                  <p className="font-medium" style={{ color: '#f0eff0' }}>
-                    {agent.tone.charAt(0).toUpperCase() + agent.tone.slice(1)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm" style={{ color: '#71717a' }}>Language</label>
-                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.language}</p>
-                </div>
-                <div>
-                  <label className="text-sm" style={{ color: '#71717a' }}>Active Hours</label>
-                  <p className="font-medium" style={{ color: '#f0eff0' }}>{agent.active_hours || '9:00 AM - 9:00 PM'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-              <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Integrations</h3>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                  <input type="checkbox" defaultChecked className="w-4 h-4" style={{ accentColor: '#e879f9' }} />
-                  <div>
-                    <p className="font-medium" style={{ color: '#f0eff0' }}>WhatsApp</p>
-                    <p className="text-xs" style={{ color: '#71717a' }}>Connected</p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-6">
+            <div className="text-sm font-semibold text-gray-900 mb-3">First hour after deploy</div>
+            <div className="space-y-3">
+              {dayOneTasks.length > 0 ? (
+                dayOneTasks.map((task) => (
+                  <div key={task} className="flex items-start gap-2 text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                    <span>{task}</span>
                   </div>
-                </label>
-                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                  <input type="checkbox" defaultChecked className="w-4 h-4" style={{ accentColor: '#e879f9' }} />
-                  <div>
-                    <p className="font-medium" style={{ color: '#f0eff0' }}>Email</p>
-                    <p className="text-xs" style={{ color: '#71717a' }}>Connected</p>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                  <input type="checkbox" className="w-4 h-4" style={{ accentColor: '#e879f9' }} disabled />
-                  <div>
-                    <p className="font-medium" style={{ color: '#f0eff0' }}>SMS</p>
-                    <p className="text-xs" style={{ color: '#71717a' }}>Coming Soon</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(239,71,111,0.3)', background: 'rgba(239,71,111,0.08)' }}>
-              <h3 className="font-bold mb-4" style={{ color: '#ff7a8a' }}>Danger Zone</h3>
-              <button
-                onClick={deleteAgent}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition"
-                style={{ background: '#dc2626', color: '#fff' }}
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Agent
-              </button>
+                ))
+              ) : (
+                <div className="text-sm text-gray-600">
+                  No first-hour actions were saved for this worker yet.
+                </div>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Sequences Tab */}
-        {activeTab === 'sequences' && (
-          <div className="max-w-2xl mx-auto p-6">
-            <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-              <Zap className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
-              <p className="font-medium" style={{ color: '#f0eff0' }}>No sequences configured yet</p>
-              <p className="text-sm mt-2" style={{ color: '#71717a' }}>Create automated workflows for your agent</p>
-              <button className="mt-4 px-4 py-2 rounded-lg font-medium transition" style={{ background: '#e879f9', color: '#0c0c0d' }}>
-                + New Sequence
-              </button>
+          <div className="bg-white border border-gray-200 rounded-3xl p-6">
+            <div className="text-sm font-semibold text-gray-900 mb-4">Worker Snapshot</div>
+            <div className="space-y-3 text-sm text-gray-700">
+              <SummaryLine icon={Bot} text={`Type: ${typeLabel}`} />
+              <SummaryLine icon={Briefcase} text={`Agent type: ${agent.agent_type}`} />
+              <SummaryLine icon={MessageSquare} text={`Languages: ${metadata.languages || 'English'}`} />
+              <SummaryLine icon={Mail} text={`Owner: ${metadata.owner?.email || metadata.owner?.name || 'Unknown'}`} />
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 font-mono break-all">
+              {agent.id}
             </div>
           </div>
-        )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="max-w-4xl mx-auto p-6 space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm" style={{ color: '#71717a' }}>WhatsApp Sent</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0</p>
-              </div>
-              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm" style={{ color: '#71717a' }}>Emails Sent</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0</p>
-              </div>
-              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm" style={{ color: '#71717a' }}>Response Rate</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#e879f9' }}>0%</p>
-              </div>
-            </div>
+function deriveChannels(agent: AgentRecord | null) {
+  if (!agent) return []
+  const channels: string[] = []
+  if (agent.channels_email) channels.push('email')
+  if (agent.channels_whatsapp) channels.push('whatsapp')
+  if (agent.channels_phone) channels.push('phone')
+  if (agent.channels_sms) channels.push('sms')
+  return channels
+}
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Usage Limits</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span style={{ color: '#71717a' }}>Calls</span>
-                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_call_limit}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span style={{ color: '#71717a' }}>Emails</span>
-                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_email_limit}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span style={{ color: '#71717a' }}>WhatsApp</span>
-                      <span className="font-medium" style={{ color: '#f0eff0' }}>0 / {agent.monthly_whatsapp_limit}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-full rounded-full" style={{ background: '#e879f9', width: '0%' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+function iconForBootTask(source: string): ElementType {
+  if (source === 'integration') return Mail
+  if (source === 'goal') return Briefcase
+  if (source === 'metric') return Sparkles
+  if (source === 'day_one_task') return PlayCircle
+  if (source === 'instruction') return FileText
+  return Bot
+}
 
-              <div className="rounded-lg border p-6" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <h3 className="font-bold mb-4" style={{ color: '#f0eff0' }}>Recent Activity</h3>
-                <p className="text-sm" style={{ color: '#71717a' }}>No activity yet</p>
-              </div>
-            </div>
+function buildContextItems(agent: AgentRecord, metadata: AgentMetadata) {
+  const items: string[] = []
+
+  if (agent.business_name || agent.business_industry) {
+    items.push(
+      `${agent.business_name || 'Business'}${agent.business_industry ? ` · ${agent.business_industry}` : ''}`
+    )
+  }
+
+  if (metadata.websiteUrl) {
+    items.push(`Website: ${metadata.websiteUrl}`)
+  }
+
+  const integrationEntries = Object.entries(metadata.integrationDetails || {}).filter(([, value]) =>
+    Boolean(value?.trim())
+  )
+  integrationEntries.forEach(([key, value]) => {
+    items.push(`${titleCase(key)}: ${value}`)
+  })
+
+  if (metadata.importantPeople) {
+    items.push(metadata.importantPeople)
+  }
+
+  return items.length > 0 ? items : ['No connected context saved yet']
+}
+
+function shortResponse(value?: string) {
+  if (!value) return 'N/A'
+  if (value.includes('5 minutes')) return '<5m'
+  if (value.includes('Same day') || value.includes('same-day')) return 'Same day'
+  return value
+}
+
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+      <p className="text-sm text-gray-500 mt-1">{description}</p>
+    </div>
+  )
+}
+
+function TopCard({
+  icon: Icon,
+  label,
+  value,
+  subtext,
+}: {
+  icon: ElementType
+  label: string
+  value: string
+  subtext: string
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-coral-600 mb-4">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">{label}</div>
+      <div className="text-base font-semibold text-gray-900">{value}</div>
+      <div className="text-sm text-gray-500 mt-1">{subtext}</div>
+    </div>
+  )
+}
+
+function InfoPanel({ title, description, items }: { title: string; description: string; items: string[] }) {
+  return (
+    <section className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8">
+      <SectionHeader title={title} description={description} />
+      <div className="space-y-3 mt-6">
+        {items.map((item) => (
+          <div key={`${title}-${item}`} className="rounded-2xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-700">
+            {item}
           </div>
-        )}
+        ))}
+      </div>
+    </section>
+  )
+}
 
-        {/* Contacts Tab */}
-        {activeTab === 'contacts' && (
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold" style={{ color: '#f0eff0' }}>Agent Contacts</h3>
-              <button className="px-4 py-2 rounded-lg font-medium text-sm transition" style={{ background: '#e879f9', color: '#0c0c0d' }}>
-                + Add Contact
-              </button>
-            </div>
+function SummaryLine({ icon: Icon, text }: { icon: ElementType; text: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-coral-600">
+        <Icon className="w-4 h-4" />
+      </div>
+      <span>{text}</span>
+    </div>
+  )
+}
 
-            {contacts.length === 0 ? (
-              <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <Users className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
-                <p className="font-medium" style={{ color: '#f0eff0' }}>No contacts yet</p>
-              </div>
-            ) : (
-              <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                <table className="w-full">
-                  <thead className="border-b" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Email</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Phone</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium" style={{ color: '#f0eff0' }}>Consent</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                    {contacts.map(contact => (
-                      <tr key={contact.id} style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                        <td className="px-6 py-3 text-sm" style={{ color: '#f0eff0' }}>{contact.name}</td>
-                        <td className="px-6 py-3 text-sm" style={{ color: '#71717a' }}>{contact.email || '-'}</td>
-                        <td className="px-6 py-3 text-sm" style={{ color: '#71717a' }}>{contact.phone || '-'}</td>
-                        <td className="px-6 py-3 text-sm">
-                          {contact.whatsapp_consent && <span className="font-medium" style={{ color: '#10b981' }}>✓ WhatsApp</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-center">
+      <div className="text-lg font-semibold text-gray-900">{value}</div>
+      <div className="text-xs text-gray-500 mt-1">{label}</div>
+    </div>
+  )
+}
 
-        {/* Inbox Tab */}
-        {activeTab === 'inbox' && (
-          <div className="max-w-4xl mx-auto p-6">
-            <h3 className="font-bold mb-6" style={{ color: '#f0eff0' }}>Escalated Messages</h3>
-            <div className="rounded-lg border p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-              <Mail className="w-12 h-12 mx-auto mb-4" style={{ color: '#71717a', opacity: 0.5 }} />
-              <p className="font-medium" style={{ color: '#f0eff0' }}>No escalated messages</p>
-              <p className="text-sm mt-2" style={{ color: '#71717a' }}>Messages that need human attention will appear here</p>
-            </div>
-          </div>
-        )}
+function ActivityRow({
+  icon: Icon,
+  title,
+  detail,
+  status,
+}: {
+  icon: ElementType
+  title: string
+  detail: string
+  status: 'queued' | 'in_progress' | 'ready'
+}) {
+  const statusStyles = {
+    queued: 'bg-gray-100 text-gray-600',
+    in_progress: 'bg-coral-50 text-coral-700',
+    ready: 'bg-emerald-50 text-emerald-700',
+  }
+
+  const statusLabels = {
+    queued: 'Queued',
+    in_progress: 'In progress',
+    ready: 'Ready',
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 flex items-start gap-4">
+      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-coral-600 shrink-0">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="font-medium text-gray-900">{title}</div>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>
+            {statusLabels[status]}
+          </span>
+        </div>
+        <div className="text-sm text-gray-600 mt-1 leading-6">{detail}</div>
       </div>
     </div>
   )

@@ -15,7 +15,32 @@ export function verifyRazorpaySignature(
     const data = `${razorpayOrderId}|${razorpayPaymentId}`
     hmac.update(data)
     const expectedSignature = hmac.digest('hex')
-    return expectedSignature === razorpaySignature
+    if (expectedSignature.length !== razorpaySignature.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'utf8'),
+      Buffer.from(razorpaySignature, 'utf8')
+    )
+  } catch {
+    return false
+  }
+}
+
+export function verifyRazorpayWebhookSignature(
+  rawBody: string,
+  signature: string,
+  secret: string
+): boolean {
+  try {
+    const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+    if (expectedSignature.length !== signature.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'utf8'),
+      Buffer.from(signature, 'utf8')
+    )
   } catch {
     return false
   }
@@ -25,11 +50,7 @@ export function verifyRazorpaySignature(
  * Verify Stripe webhook signature
  * Used in webhook to confirm webhook authenticity
  */
-export function verifyStripeSignature(
-  body: string,
-  signature: string,
-  secret: string
-): boolean {
+export function verifyStripeSignature(body: string, signature: string, secret: string): boolean {
   try {
     const hmac = crypto.createHmac('sha256', secret)
     hmac.update(body)

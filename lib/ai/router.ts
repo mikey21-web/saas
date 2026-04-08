@@ -55,7 +55,7 @@ const modelFallbackChain: ModelProvider[] = [
     provider: 'gemini',
     model: 'gemini-2.0-flash',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    apiKeyEnv: 'GEMINI_API_KEY',
+    apiKeyEnv: 'GOOGLE_GENERATIVE_AI_API_KEY',
   },
   {
     provider: 'kimi',
@@ -74,10 +74,7 @@ interface CallAIOptions {
   forceProvider?: 'groq' | 'gemini' | 'kimi'
 }
 
-async function callProvider(
-  provider: ModelProvider,
-  options: CallAIOptions
-): Promise<AIResponse> {
+async function callProvider(provider: ModelProvider, options: CallAIOptions): Promise<AIResponse> {
   const apiKey = process.env[provider.apiKeyEnv] || ''
 
   if (!apiKey) {
@@ -111,7 +108,7 @@ async function callProvider(
     throw new Error(`${provider.provider} API error ${res.status}: ${errorText}`)
   }
 
-  const data = await res.json() as {
+  const data = (await res.json()) as {
     choices: Array<{
       message: {
         content: string | null
@@ -178,12 +175,12 @@ export function estimateCostINR(
 ): number {
   // Approximate rates in INR per 1K tokens (input + output blended)
   const rates: Record<string, { input: number; output: number }> = {
-    groq: { input: 0.05, output: 0.08 },    // Near-free tier
-    gemini: { input: 0.03, output: 0.06 },   // Google free tier generous
-    kimi: { input: 0.10, output: 0.15 },      // Moonshot pricing
+    groq: { input: 0.05, output: 0.08 }, // Near-free tier
+    gemini: { input: 0.03, output: 0.06 }, // Google free tier generous
+    kimi: { input: 0.1, output: 0.15 }, // Moonshot pricing
   }
 
-  const rate = rates[provider] ?? { input: 0.10, output: 0.15 }
+  const rate = rates[provider] ?? { input: 0.1, output: 0.15 }
   const inputCost = (usage.prompt_tokens / 1000) * rate.input
   const outputCost = (usage.completion_tokens / 1000) * rate.output
 

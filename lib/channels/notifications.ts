@@ -30,7 +30,7 @@ export async function sendWhatsAppNotification(
 
   try {
     // Log notification to database
-    await (supabaseAdmin as any).from('notifications').insert({
+    ;(await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -45,9 +45,11 @@ export async function sendWhatsAppNotification(
         mock: true,
         simulated: true,
       },
-    }) as any
+    })) as any
 
-    console.log(`[WhatsApp Mock] Sent to ${payload.recipient}: ${payload.message.substring(0, 50)}...`)
+    console.log(
+      `[WhatsApp Mock] Sent to ${payload.recipient}: ${payload.message.substring(0, 50)}...`
+    )
 
     return {
       success: true,
@@ -79,7 +81,7 @@ export async function sendEmailNotification(
 
   try {
     // Log notification to database
-    await (supabaseAdmin as any).from('notifications').insert({
+    ;(await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -94,7 +96,7 @@ export async function sendEmailNotification(
         mock: true,
         simulated: true,
       },
-    }) as any
+    })) as any
 
     console.log(`[Email Mock] Sent to ${payload.recipient}: ${payload.title}`)
 
@@ -128,7 +130,7 @@ export async function sendSMSNotification(
 
   try {
     // Log notification to database
-    await (supabaseAdmin as any).from('notifications').insert({
+    ;(await (supabaseAdmin as any).from('notifications').insert({
       user_id: payload.userId,
       agent_id: payload.agentId,
       recipient: payload.recipient,
@@ -143,7 +145,7 @@ export async function sendSMSNotification(
         mock: true,
         simulated: true,
       },
-    }) as any
+    })) as any
 
     console.log(`[SMS Mock] Sent to ${payload.recipient}: ${payload.message.substring(0, 30)}...`)
 
@@ -168,9 +170,7 @@ export async function sendSMSNotification(
 /**
  * Router function to send notification via appropriate channel
  */
-export async function sendNotification(
-  payload: NotificationPayload
-): Promise<NotificationResult> {
+export async function sendNotification(payload: NotificationPayload): Promise<NotificationResult> {
   switch (payload.channel) {
     case 'whatsapp':
       return sendWhatsAppNotification(payload)
@@ -194,7 +194,7 @@ export async function sendNotification(
 export async function sendBatchNotifications(
   payloads: NotificationPayload[]
 ): Promise<NotificationResult[]> {
-  return Promise.all(payloads.map(payload => sendNotification(payload)))
+  return Promise.all(payloads.map((payload) => sendNotification(payload)))
 }
 
 /**
@@ -207,12 +207,12 @@ export async function logNotificationActivity(
   details: Record<string, unknown>
 ): Promise<void> {
   try {
-    await (supabaseAdmin as any).from('activity_logs').insert({
+    ;(await (supabaseAdmin as any).from('activity_logs').insert({
       user_id: userId,
       agent_id: agentId,
       action,
       details,
-    }) as any
+    })) as any
   } catch (error) {
     console.error('Failed to log notification activity:', error)
   }

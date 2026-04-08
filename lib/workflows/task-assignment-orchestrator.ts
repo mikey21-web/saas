@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { supabaseAdmin } from "@/lib/supabase/client";
-import { sendWhatsAppNotification, logNotificationActivity } from "@/lib/channels/notifications";
+import Anthropic from '@anthropic-ai/sdk'
+import { supabaseAdmin } from '@/lib/supabase/client'
+import { sendWhatsAppNotification, logNotificationActivity } from '@/lib/channels/notifications'
 
 /**
  * Task Assignment Workflow Orchestrator
@@ -14,67 +14,67 @@ import { sendWhatsAppNotification, logNotificationActivity } from "@/lib/channel
  */
 
 interface WorkflowInput {
-  userId: string;
-  agentId: string;
-  meetingNotes: string;
-  teamMembers: string[]; // list of team member names/emails
+  userId: string
+  agentId: string
+  meetingNotes: string
+  teamMembers: string[] // list of team member names/emails
 }
 
 interface ParserOutput {
   tasks: Array<{
-    title: string;
-    description: string;
-    priority: "low" | "normal" | "high" | "urgent";
-  }>;
-  extractionConfidence: number;
+    title: string
+    description: string
+    priority: 'low' | 'normal' | 'high' | 'urgent'
+  }>
+  extractionConfidence: number
 }
 
 interface RouterOutput {
   assignments: Array<{
-    taskTitle: string;
-    assignedTo: string;
-    reason: string;
-  }>;
+    taskTitle: string
+    assignedTo: string
+    reason: string
+  }>
 }
 
 interface NotifierOutput {
   notifications: Array<{
-    recipient: string;
-    channel: "whatsapp" | "email" | "sms";
-    status: "sent" | "failed";
-  }>;
+    recipient: string
+    channel: 'whatsapp' | 'email' | 'sms'
+    status: 'sent' | 'failed'
+  }>
 }
 
 interface TrackerOutput {
-  taskIds: string[];
-  trackingStarted: boolean;
+  taskIds: string[]
+  trackingStarted: boolean
 }
 
 interface ReporterOutput {
-  report: string;
+  report: string
   taskSummary: {
-    total: number;
-    assigned: number;
-    dueDates: string[];
-  };
+    total: number
+    assigned: number
+    dueDates: string[]
+  }
 }
 
 interface WorkflowState {
-  input: WorkflowInput;
-  parserOutput?: ParserOutput;
-  routerOutput?: RouterOutput;
-  notifierOutput?: NotifierOutput;
-  trackerOutput?: TrackerOutput;
-  reporterOutput?: ReporterOutput;
-  executionId?: string;
-  errors: string[];
+  input: WorkflowInput
+  parserOutput?: ParserOutput
+  routerOutput?: RouterOutput
+  notifierOutput?: NotifierOutput
+  trackerOutput?: TrackerOutput
+  reporterOutput?: ReporterOutput
+  executionId?: string
+  errors: string[]
 }
 
 class TaskAssignmentOrchestrator {
-  private client: Anthropic;
+  private client: Anthropic
 
   constructor() {
-    this.client = new Anthropic();
+    this.client = new Anthropic()
   }
 
   /**
@@ -95,35 +95,34 @@ Output JSON with this format:
     }
   ],
   "extractionConfidence": 0.95
-}`;
+}`
 
       const message = await this.client.messages.create({
-        model: "claude-opus-4-6",
+        model: 'claude-opus-4-6',
         max_tokens: 1024,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `Extract tasks from these meeting notes:\n\n${state.input.meetingNotes}`,
           },
         ],
         system: systemPrompt,
-      });
+      })
 
-      const responseText =
-        message.content[0].type === "text" ? message.content[0].text : "";
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        throw new Error("Failed to parse parser agent response");
+        throw new Error('Failed to parse parser agent response')
       }
 
-      state.parserOutput = JSON.parse(jsonMatch[0]) as ParserOutput;
-      console.log("✓ Parser Agent: Extracted", state.parserOutput.tasks.length, "tasks");
+      state.parserOutput = JSON.parse(jsonMatch[0]) as ParserOutput
+      console.log('✓ Parser Agent: Extracted', state.parserOutput.tasks.length, 'tasks')
 
-      return state;
+      return state
     } catch (error) {
-      state.errors.push(`Parser Agent Error: ${String(error)}`);
-      return state;
+      state.errors.push(`Parser Agent Error: ${String(error)}`)
+      return state
     }
   }
 
@@ -133,13 +132,13 @@ Output JSON with this format:
    */
   async routerAgent(state: WorkflowState): Promise<WorkflowState> {
     if (!state.parserOutput?.tasks.length) {
-      state.errors.push("Router: No tasks to route");
-      return state;
+      state.errors.push('Router: No tasks to route')
+      return state
     }
 
     try {
-      const tasksJson = JSON.stringify(state.parserOutput.tasks);
-      const teamJson = JSON.stringify(state.input.teamMembers);
+      const tasksJson = JSON.stringify(state.parserOutput.tasks)
+      const teamJson = JSON.stringify(state.input.teamMembers)
 
       const systemPrompt = `You are a task assignment expert. Match extracted tasks to team members based on their names and capabilities.
 
@@ -152,35 +151,34 @@ Output JSON with this format:
       "reason": "Why this person is best fit"
     }
   ]
-}`;
+}`
 
       const message = await this.client.messages.create({
-        model: "claude-opus-4-6",
+        model: 'claude-opus-4-6',
         max_tokens: 1024,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `Assign these tasks:\n${tasksJson}\n\nTo these team members:\n${teamJson}`,
           },
         ],
         system: systemPrompt,
-      });
+      })
 
-      const responseText =
-        message.content[0].type === "text" ? message.content[0].text : "";
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        throw new Error("Failed to parse router agent response");
+        throw new Error('Failed to parse router agent response')
       }
 
-      state.routerOutput = JSON.parse(jsonMatch[0]) as RouterOutput;
-      console.log("✓ Router Agent: Assigned", state.routerOutput.assignments.length, "tasks");
+      state.routerOutput = JSON.parse(jsonMatch[0]) as RouterOutput
+      console.log('✓ Router Agent: Assigned', state.routerOutput.assignments.length, 'tasks')
 
-      return state;
+      return state
     } catch (error) {
-      state.errors.push(`Router Agent Error: ${String(error)}`);
-      return state;
+      state.errors.push(`Router Agent Error: ${String(error)}`)
+      return state
     }
   }
 
@@ -190,65 +188,60 @@ Output JSON with this format:
    */
   async notifierAgent(state: WorkflowState): Promise<WorkflowState> {
     if (!state.routerOutput?.assignments.length) {
-      state.errors.push("Notifier: No assignments to notify");
-      return state;
+      state.errors.push('Notifier: No assignments to notify')
+      return state
     }
 
     try {
-      const sentNotifications = [];
+      const sentNotifications = []
 
       // Send WhatsApp notifications to each team member
       for (const assignment of state.routerOutput.assignments) {
-        const message = `📋 New Task Assignment\n\n${assignment.taskTitle}\n\nAssigned by: Task Assignment Workflow\nReason: ${assignment.reason}`;
+        const message = `📋 New Task Assignment\n\n${assignment.taskTitle}\n\nAssigned by: Task Assignment Workflow\nReason: ${assignment.reason}`
 
         const result = await sendWhatsAppNotification({
           userId: state.input.userId,
           agentId: state.input.agentId,
           recipient: assignment.assignedTo,
-          channel: "whatsapp",
+          channel: 'whatsapp',
           message,
           title: `Task: ${assignment.taskTitle}`,
-          type: "task_assignment",
-        });
+          type: 'task_assignment',
+        })
 
         if (result.success) {
           sentNotifications.push({
             recipient: assignment.assignedTo,
-            channel: "whatsapp" as const,
-            status: "sent" as const,
-          });
+            channel: 'whatsapp' as const,
+            status: 'sent' as const,
+          })
         } else {
           sentNotifications.push({
             recipient: assignment.assignedTo,
-            channel: "whatsapp" as const,
-            status: "failed" as const,
-          });
-          state.errors.push(`Failed to notify ${assignment.assignedTo}: ${result.message}`);
+            channel: 'whatsapp' as const,
+            status: 'failed' as const,
+          })
+          state.errors.push(`Failed to notify ${assignment.assignedTo}: ${result.message}`)
         }
       }
 
       state.notifierOutput = {
         notifications: sentNotifications,
-      };
+      }
 
       // Log activity
-      await logNotificationActivity(
-        state.input.userId,
-        state.input.agentId,
-        "notification_sent",
-        {
-          count: sentNotifications.length,
-          channel: "whatsapp",
-          timestamp: new Date().toISOString(),
-        }
-      );
+      await logNotificationActivity(state.input.userId, state.input.agentId, 'notification_sent', {
+        count: sentNotifications.length,
+        channel: 'whatsapp',
+        timestamp: new Date().toISOString(),
+      })
 
-      console.log("✓ Notifier Agent: Sent", sentNotifications.length, "notifications");
+      console.log('✓ Notifier Agent: Sent', sentNotifications.length, 'notifications')
 
-      return state;
+      return state
     } catch (error) {
-      state.errors.push(`Notifier Agent Error: ${String(error)}`);
-      return state;
+      state.errors.push(`Notifier Agent Error: ${String(error)}`)
+      return state
     }
   }
 
@@ -258,12 +251,12 @@ Output JSON with this format:
    */
   async trackerAgent(state: WorkflowState): Promise<WorkflowState> {
     if (!state.routerOutput?.assignments.length) {
-      state.errors.push("Tracker: No assignments to track");
-      return state;
+      state.errors.push('Tracker: No assignments to track')
+      return state
     }
 
     try {
-      const taskIds: string[] = [];
+      const taskIds: string[] = []
 
       // Create task records in Supabase
       for (const assignment of state.routerOutput.assignments) {
@@ -272,35 +265,35 @@ Output JSON with this format:
           workflow_id: state.input.agentId,
           title: assignment.taskTitle,
           assigned_to: assignment.assignedTo,
-          assigned_by: "Task Assignment Workflow",
-          status: "pending",
-          priority: "normal",
+          assigned_by: 'Task Assignment Workflow',
+          status: 'pending',
+          priority: 'normal',
           created_at: new Date().toISOString(),
-        };
+        }
 
-        const { data, error } = await ((supabaseAdmin as any)
-          .from("tasks")
+        const { data, error } = (await (supabaseAdmin as any)
+          .from('tasks')
           .insert(taskData)
-          .select("id")) as any;
+          .select('id')) as any
 
         if (error) {
-          console.error("Failed to create task:", error);
+          console.error('Failed to create task:', error)
         } else if (data && data.length > 0) {
-          taskIds.push(data[0].id);
+          taskIds.push(data[0].id)
         }
       }
 
       state.trackerOutput = {
         taskIds,
         trackingStarted: true,
-      };
+      }
 
-      console.log("✓ Tracker Agent: Created", taskIds.length, "tasks");
+      console.log('✓ Tracker Agent: Created', taskIds.length, 'tasks')
 
-      return state;
+      return state
     } catch (error) {
-      state.errors.push(`Tracker Agent Error: ${String(error)}`);
-      return state;
+      state.errors.push(`Tracker Agent Error: ${String(error)}`)
+      return state
     }
   }
 
@@ -320,37 +313,36 @@ Output JSON with this format:
     "assigned": 5,
     "dueDates": ["2025-01-15", "2025-01-16"]
   }
-}`;
+}`
 
-      const assignmentCount = state.routerOutput?.assignments.length || 0;
+      const assignmentCount = state.routerOutput?.assignments.length || 0
 
       const message = await this.client.messages.create({
-        model: "claude-opus-4-6",
+        model: 'claude-opus-4-6',
         max_tokens: 512,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `Generate a report for ${assignmentCount} tasks assigned in today's workflow. Keep it brief and actionable.`,
           },
         ],
         system: systemPrompt,
-      });
+      })
 
-      const responseText =
-        message.content[0].type === "text" ? message.content[0].text : "";
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {
-        throw new Error("Failed to parse reporter agent response");
+        throw new Error('Failed to parse reporter agent response')
       }
 
-      state.reporterOutput = JSON.parse(jsonMatch[0]) as ReporterOutput;
-      console.log("✓ Reporter Agent: Generated report");
+      state.reporterOutput = JSON.parse(jsonMatch[0]) as ReporterOutput
+      console.log('✓ Reporter Agent: Generated report')
 
-      return state;
+      return state
     } catch (error) {
-      state.errors.push(`Reporter Agent Error: ${String(error)}`);
-      return state;
+      state.errors.push(`Reporter Agent Error: ${String(error)}`)
+      return state
     }
   }
 
@@ -361,65 +353,64 @@ Output JSON with this format:
     let state: WorkflowState = {
       input,
       errors: [],
-    };
+    }
 
     // Create workflow execution record
-    const { data: executionData } = await ((supabaseAdmin as any)
-      .from("workflow_executions")
+    const { data: executionData } = (await (supabaseAdmin as any)
+      .from('workflow_executions')
       .insert({
         user_id: input.userId,
         agent_id: input.agentId,
-        workflow_type: "task_assignment",
-        trigger_type: "manual",
+        workflow_type: 'task_assignment',
+        trigger_type: 'manual',
         input_data: JSON.stringify(input),
-        status: "running",
+        status: 'running',
         started_at: new Date().toISOString(),
       })
-      .select("id")) as any;
+      .select('id')) as any
 
     if (executionData && executionData.length > 0) {
-      state.executionId = executionData[0].id;
+      state.executionId = executionData[0].id
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
 
     // Execute 5-agent pipeline sequentially
-    state = await this.parserAgent(state);
-    state = await this.routerAgent(state);
-    state = await this.notifierAgent(state);
-    state = await this.trackerAgent(state);
-    state = await this.reporterAgent(state);
+    state = await this.parserAgent(state)
+    state = await this.routerAgent(state)
+    state = await this.notifierAgent(state)
+    state = await this.trackerAgent(state)
+    state = await this.reporterAgent(state)
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - startTime
 
     // Update execution record with final status
     if (state.executionId) {
-      await ((supabaseAdmin as any)
-        .from("workflow_executions")
+      ;(await (supabaseAdmin as any)
+        .from('workflow_executions')
         .update({
-          status: state.errors.length === 0 ? "completed" : "failed",
-          error_message:
-            state.errors.length > 0 ? state.errors.join("; ") : null,
-          parser_state: state.parserOutput ? "completed" : "failed",
+          status: state.errors.length === 0 ? 'completed' : 'failed',
+          error_message: state.errors.length > 0 ? state.errors.join('; ') : null,
+          parser_state: state.parserOutput ? 'completed' : 'failed',
           parser_output: state.parserOutput ? JSON.stringify(state.parserOutput) : null,
-          router_state: state.routerOutput ? "completed" : "failed",
+          router_state: state.routerOutput ? 'completed' : 'failed',
           router_output: state.routerOutput ? JSON.stringify(state.routerOutput) : null,
-          notifier_state: state.notifierOutput ? "completed" : "failed",
+          notifier_state: state.notifierOutput ? 'completed' : 'failed',
           notifier_output: state.notifierOutput ? JSON.stringify(state.notifierOutput) : null,
-          tracker_state: state.trackerOutput ? "completed" : "failed",
+          tracker_state: state.trackerOutput ? 'completed' : 'failed',
           tracker_output: state.trackerOutput ? JSON.stringify(state.trackerOutput) : null,
-          reporter_state: state.reporterOutput ? "completed" : "failed",
+          reporter_state: state.reporterOutput ? 'completed' : 'failed',
           reporter_output: state.reporterOutput ? JSON.stringify(state.reporterOutput) : null,
           total_duration_ms: duration,
           completed_at: new Date().toISOString(),
         })
-        .eq("id", state.executionId)) as any;
+        .eq('id', state.executionId)) as any
     }
 
-    console.log(`✓ Workflow completed in ${duration}ms`);
+    console.log(`✓ Workflow completed in ${duration}ms`)
 
-    return state;
+    return state
   }
 }
 
-export const taskAssignmentOrchestrator = new TaskAssignmentOrchestrator();
+export const taskAssignmentOrchestrator = new TaskAssignmentOrchestrator()

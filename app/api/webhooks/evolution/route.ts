@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json() as {
+    const payload = (await request.json()) as {
       event: string
       instance: string
       data?: {
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, agentId, from })
   } catch (e: unknown) {
-    console.error('Evolution webhook error:', e)
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

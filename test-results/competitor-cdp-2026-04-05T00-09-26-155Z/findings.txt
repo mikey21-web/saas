@@ -1,0 +1,13 @@
+Connecting to Chrome CDP: http://127.0.0.1:9222 
+Using page: https://dashboard.actionagents.io/activity
+[SCOPE] Current tab is dashboard.actionagents.io. Switching to https://dashboard.actionagents.io /dashboard
+Dashboard origin scope: https://dashboard.actionagents.io 
+Dashboard host scope: dashboard.actionagents.io 
+Skills-library crawling is disabled (COMPETITOR_SKIP_SKILLS_LIBRARY=1).
+Visited 1: chrome-error://chromewebdata/
+Title: dashboard.actionagents.io%20
+Sidebar targets found: 0
+Visited 2: chrome-error://chromewebdata/
+Title: dashboard.actionagents.io%20
+Clicked button: "Reload" -> chrome-error://chromewebdata/
+No further actionable items in final-pass.

@@ -51,6 +51,7 @@ export interface Database {
           business_description: string | null
           tone: 'professional' | 'casual' | 'friendly'
           channels_whatsapp: boolean
+          whatsapp_phone_number_id: string | null
           channels_email: boolean
           channels_sms: boolean
           channels_phone: boolean
@@ -81,6 +82,7 @@ export interface Database {
           business_description?: string
           tone?: 'professional' | 'casual' | 'friendly'
           channels_whatsapp?: boolean
+          whatsapp_phone_number_id?: string
           channels_email?: boolean
           channels_sms?: boolean
           channels_phone?: boolean
@@ -97,6 +99,7 @@ export interface Database {
           business_description?: string
           tone?: 'professional' | 'casual' | 'friendly'
           channels_whatsapp?: boolean
+          whatsapp_phone_number_id?: string
           channels_email?: boolean
           channels_sms?: boolean
           channels_phone?: boolean

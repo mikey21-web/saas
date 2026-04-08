@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyRazorpaySignature } from '@/lib/payments/razorpay-verify'
+import { verifyRazorpayWebhookSignature } from '@/lib/payments/razorpay-verify'
 import { supabaseAdmin } from '@/lib/supabase/client'
 
 export const runtime = 'nodejs'
@@ -30,24 +30,17 @@ export async function POST(req: NextRequest) {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET || ''
 
     if (!secret) {
-      console.error('RAZORPAY_WEBHOOK_SECRET not configured')
+      // console.error('RAZORPAY_WEBHOOK_SECRET not configured')
       return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
     }
 
-    // Verify signature
-    const isValid = verifyRazorpaySignature(
-      // For payment.authorized event, we need to verify differently
-      // This is a simplified version - in production use proper signature verification
-      body.split('"order_id":"')[1]?.split('"')[0] || '',
-      body.split('"id":"')[1]?.split('"')[0] || '',
-      signature,
-      secret
-    )
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    }
 
-    if (!isValid && process.env.NODE_ENV === 'production') {
-      console.warn('Invalid Razorpay webhook signature')
-      // In production, reject invalid signatures
-      // In dev, we allow it for testing
+    const isValid = verifyRazorpayWebhookSignature(body, signature, secret)
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
     const data = JSON.parse(body) as RazorpayWebhookBody
@@ -64,31 +57,29 @@ export async function POST(req: NextRequest) {
 
         if (userId && agentId) {
           // Mark agent as deployed
-          await ((supabaseAdmin as any)
+          await (supabaseAdmin as any)
             .from('agents')
             .update({
               status: 'active',
               deployed_at: new Date().toISOString(),
             })
             .eq('id', agentId)
-            .eq('user_id', userId)) as any
+            .eq('user_id', userId)
 
           // Log activity
-          await ((supabaseAdmin as any)
-            .from('activity_logs')
-            .insert({
-              user_id: userId,
-              agent_id: agentId,
-              action: 'payment_received',
-              details: {
-                paymentId: payment.id,
-                orderId: payment.order_id,
-                plan: notes.plan,
-                status: 'success',
-              },
-            })) as any
+          await (supabaseAdmin as any).from('activity_logs').insert({
+            user_id: userId,
+            agent_id: agentId,
+            action: 'payment_received',
+            details: {
+              paymentId: payment.id,
+              orderId: payment.order_id,
+              plan: notes.plan,
+              status: 'success',
+            },
+          })
 
-          console.log(`✓ Payment received for agent ${agentId}`)
+          // console.log(`✓ Payment received for agent ${agentId}`)
         }
       }
     }
@@ -103,26 +94,24 @@ export async function POST(req: NextRequest) {
 
       if (userId && agentId) {
         // Log failed payment
-        await ((supabaseAdmin as any)
-          .from('activity_logs')
-          .insert({
-            user_id: userId,
-            agent_id: agentId,
-            action: 'payment_failed',
-            details: {
-              paymentId: payment.id,
-              orderId: payment.order_id,
-              status: 'failed',
-            },
-          })) as any
+        await (supabaseAdmin as any).from('activity_logs').insert({
+          user_id: userId,
+          agent_id: agentId,
+          action: 'payment_failed',
+          details: {
+            paymentId: payment.id,
+            orderId: payment.order_id,
+            status: 'failed',
+          },
+        })
 
-        console.log(`✗ Payment failed for agent ${agentId}`)
+        // console.log(`✗ Payment failed for agent ${agentId}`)
       }
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Razorpay webhook error:', error)
+    // console.error('Razorpay webhook error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

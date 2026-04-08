@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
         },
       },
       // For agent deployments, include client_reference_id to activate after payment
-      ...(agentId && userId && {
-        client_reference_id: `agent_${agentId}_${userId}`,
-      }),
+      ...(agentId &&
+        userId && {
+          client_reference_id: `agent_${agentId}_${userId}`,
+        }),
       success_url: agentId
         ? `${process.env.NEXT_PUBLIC_APP_URL}/onboard/success?agentId=${agentId}&agentName=${encodeURIComponent(agentName)}`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true&plan=${plan}`,
@@ -53,10 +54,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error) {
-    console.error('Stripe checkout error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create checkout session' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 })
   }
 }

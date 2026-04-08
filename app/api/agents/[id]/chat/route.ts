@@ -10,13 +10,43 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs'
+import { resolveAuthIdentity } from '@/lib/auth/server'
 import { executeAgent } from '@/lib/agent/executor'
 import type { ExecutionTrigger } from '@/lib/agent/executor'
 import { queueAgentJob } from '@/lib/queue/producer'
+import { supabaseAdmin } from '@/lib/supabase/client'
 
 // Use Node.js runtime (Clerk uses MessageChannel which isn't supported in Edge Runtime)
 export const runtime = 'nodejs'
+
+async function verifyOwnedAgentAndConversation(userId: string, agentId: string, conversationId?: string) {
+  const { data: agent } = await (supabaseAdmin.from('agents') as any)
+    .select('id')
+    .eq('id', agentId)
+    .eq('user_id', userId)
+    .single()
+
+  if (!agent) {
+    return { ok: false as const, error: 'Agent not found' }
+  }
+
+  if (!conversationId) {
+    return { ok: true as const }
+  }
+
+  const { data: conversation } = await (supabaseAdmin.from('conversations') as any)
+    .select('id')
+    .eq('id', conversationId)
+    .eq('agent_id', agentId)
+    .eq('user_id', userId)
+    .single()
+
+  if (!conversation) {
+    return { ok: false as const, error: 'Conversation not found' }
+  }
+
+  return { ok: true as const }
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -30,29 +60,29 @@ interface ChatRequestBody {
 
 // ─── POST Handler ────────────────────────────────────────────────────────────
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = auth()
+    const jwtIdentity = await resolveAuthIdentity(request)
+    const userId = jwtIdentity?.supabaseUserId || jwtIdentity?.externalUserId
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json() as ChatRequestBody
+    const body = (await request.json()) as ChatRequestBody
 
     if (!body.message || typeof body.message !== 'string') {
-      return NextResponse.json(
-        { error: 'Missing or invalid "message" field' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing or invalid "message" field' }, { status: 400 })
     }
 
-    const agentId = params.id
+    const { id: agentId } = await params
     const channel = body.channel ?? 'whatsapp'
     const conversationId = body.conversationId ?? `conv_${agentId}_${Date.now()}`
+
+    const access = await verifyOwnedAgentAndConversation(userId, agentId, body.conversationId)
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: 404 })
+    }
 
     const trigger: ExecutionTrigger = {
       agentId,
@@ -83,9 +113,7 @@ export async function POST(
       async start(controller) {
         try {
           // Send initial event
-          controller.enqueue(
-            encoder.encode(formatSSE({ type: 'start', agentId, conversationId }))
-          )
+          controller.enqueue(encoder.encode(formatSSE({ type: 'start', agentId, conversationId })))
 
           // Execute the agent
           const result = await executeAgent(trigger)
@@ -97,9 +125,7 @@ export async function POST(
 
           while (offset < responseText.length) {
             const chunk = responseText.slice(offset, offset + chunkSize)
-            controller.enqueue(
-              encoder.encode(formatSSE({ type: 'chunk', content: chunk }))
-            )
+            controller.enqueue(encoder.encode(formatSSE({ type: 'chunk', content: chunk })))
             offset += chunkSize
           }
 
@@ -123,9 +149,7 @@ export async function POST(
           controller.close()
         } catch (e: unknown) {
           const errorMsg = e instanceof Error ? e.message : 'Unknown error'
-          controller.enqueue(
-            encoder.encode(formatSSE({ type: 'error', error: errorMsg }))
-          )
+          controller.enqueue(encoder.encode(formatSSE({ type: 'error', error: errorMsg })))
           controller.close()
         }
       },
@@ -142,7 +166,6 @@ export async function POST(
     })
   } catch (e: unknown) {
     const errorMsg = e instanceof Error ? e.message : 'Unknown error'
-    console.error('[Chat API] Error:', errorMsg)
 
     return NextResponse.json(
       { error: 'Failed to process chat request', details: errorMsg },

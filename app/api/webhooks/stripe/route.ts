@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET ?? '')
   } catch (e: unknown) {
-    console.error('Stripe webhook signature failed:', e)
+    // console.error('Stripe webhook signature failed:', e)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -30,18 +30,18 @@ export async function POST(request: NextRequest) {
           const plan = (session.metadata?.plan as 'intern' | 'agent') || 'agent'
 
           // Mark agent as deployed
-          const { error } = await ((supabaseAdmin as any)
+          const { error } = await (supabaseAdmin as any)
             .from('agents')
             .update({
               status: 'active',
               deployed_at: new Date().toISOString(),
             })
             .eq('id', agentId)
-            .eq('user_id', userId)) as any
+            .eq('user_id', userId)
 
           if (!error) {
             // Log activity
-            await ((supabaseAdmin as any).from('activity_logs').insert({
+            await (supabaseAdmin as any).from('activity_logs').insert({
               user_id: userId,
               agent_id: agentId,
               action: 'payment_received',
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
                 amount: session.amount_total ? session.amount_total / 100 : 0,
                 currency: session.currency,
               },
-            })) as any
-            console.log(`✓ Payment received for agent ${agentId}`)
+            })
+            // console.log(`✓ Payment received for agent ${agentId}`)
           }
         }
       }
@@ -63,27 +63,18 @@ export async function POST(request: NextRequest) {
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
-      const sub = event.data.object as Stripe.Subscription
-      const tier = (sub.metadata as Record<string, string>).tier
-      console.log(`[Stripe] Subscription ${sub.status} for tier: ${tier}`)
       break
     }
 
     case 'customer.subscription.deleted': {
-      const sub = event.data.object as Stripe.Subscription
-      console.log(`[Stripe] Subscription cancelled: ${sub.id}`)
       break
     }
 
     case 'invoice.payment_succeeded': {
-      const invoice = event.data.object as Stripe.Invoice
-      console.log(`[Stripe] Payment succeeded: ${invoice.amount_paid}`)
       break
     }
 
     case 'invoice.payment_failed': {
-      const invoice = event.data.object as Stripe.Invoice
-      console.error(`[Stripe] Payment failed for ${invoice.customer}`)
       break
     }
 
@@ -94,7 +85,7 @@ export async function POST(request: NextRequest) {
 
       if (agentId && userId) {
         // Log failed payment
-        await ((supabaseAdmin as any).from('activity_logs').insert({
+        await (supabaseAdmin as any).from('activity_logs').insert({
           user_id: userId,
           agent_id: agentId,
           action: 'payment_failed',
@@ -104,8 +95,8 @@ export async function POST(request: NextRequest) {
             failureMessage: charge.failure_message,
             status: 'failed',
           },
-        })) as any
-        console.log(`✗ Payment failed for agent ${agentId}`)
+        })
+        // console.log(`✗ Payment failed for agent ${agentId}`)
       }
       break
     }

@@ -138,8 +138,12 @@ const webSearch: Skill = {
         },
         body: JSON.stringify({ q: query, gl: 'in', hl: 'en', num: 5 }),
       })
-      const data = await res.json() as { organic?: Array<{ title: string; snippet: string }> }
-      const results = data.organic?.slice(0, 3).map((r) => `${r.title}: ${r.snippet}`).join('\n') ?? ''
+      const data = (await res.json()) as { organic?: Array<{ title: string; snippet: string }> }
+      const results =
+        data.organic
+          ?.slice(0, 3)
+          .map((r) => `${r.title}: ${r.snippet}`)
+          .join('\n') ?? ''
       return { success: true, output: results, data: data as Record<string, unknown> }
     } catch (e: unknown) {
       return { success: false, output: '', error: (e as Error).message }
@@ -166,7 +170,7 @@ const scrapeURL: Skill = {
         },
         body: JSON.stringify({ url, formats: ['markdown'] }),
       })
-      const data = await res.json() as { markdown?: string }
+      const data = (await res.json()) as { markdown?: string }
       return { success: true, output: data.markdown?.slice(0, 2000) ?? '' }
     } catch (e: unknown) {
       return { success: false, output: '', error: (e as Error).message }
@@ -204,9 +208,11 @@ const gstLookup: Skill = {
   execute: async (input, _ctx) => {
     const { gstin } = input as { gstin: string }
     try {
-      const res = await fetch(`https://api.gst.gov.in/commonapi/v1.1/search?action=TP&gstin=${gstin}`)
+      const res = await fetch(
+        `https://api.gst.gov.in/commonapi/v1.1/search?action=TP&gstin=${gstin}`
+      )
       if (!res.ok) return { success: false, output: '', error: 'GSTIN not found' }
-      const data = await res.json() as Record<string, unknown>
+      const data = (await res.json()) as Record<string, unknown>
       return { success: true, output: `GSTIN ${gstin} is valid`, data }
     } catch (e: unknown) {
       return { success: false, output: '', error: (e as Error).message }
@@ -249,7 +255,11 @@ const calculateGST: Skill = {
     supplyType: z.enum(['intra', 'inter']).default('intra'),
   }),
   execute: async (input, _ctx) => {
-    const { amount, gstRate, supplyType } = input as { amount: number; gstRate: number; supplyType: 'intra' | 'inter' }
+    const { amount, gstRate, supplyType } = input as {
+      amount: number
+      gstRate: number
+      supplyType: 'intra' | 'inter'
+    }
     const gstAmount = (amount * gstRate) / 100
     const total = amount + gstAmount
     if (supplyType === 'intra') {
@@ -293,8 +303,12 @@ const upiPaymentLink: Skill = {
         },
         body: JSON.stringify({ amount: amount * 100, currency: 'INR', description }),
       })
-      const data = await res.json() as { short_url?: string }
-      return { success: true, output: `Payment link created: ${data.short_url}`, data: data as Record<string, unknown> }
+      const data = (await res.json()) as { short_url?: string }
+      return {
+        success: true,
+        output: `Payment link created: ${data.short_url}`,
+        data: data as Record<string, unknown>,
+      }
     } catch (e: unknown) {
       return { success: false, output: '', error: (e as Error).message }
     }
@@ -467,7 +481,10 @@ const triggerN8nWorkflow: Skill = {
     payload: z.record(z.unknown()).optional(),
   }),
   execute: async (input, _ctx) => {
-    const { webhookUrl, payload } = input as { webhookUrl: string; payload?: Record<string, unknown> }
+    const { webhookUrl, payload } = input as {
+      webhookUrl: string
+      payload?: Record<string, unknown>
+    }
     try {
       const res = await fetch(webhookUrl, {
         method: 'POST',

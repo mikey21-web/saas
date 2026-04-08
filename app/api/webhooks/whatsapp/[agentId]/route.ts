@@ -8,8 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getCredentialsByAuthToken, getAgentCredentials } from '@/lib/supabase/credentials'
-import { verifyWebhookSignature } from '@/lib/credentials/vault'
+import { getCredentialsByAuthToken } from '@/lib/supabase/credentials'
 import { executeAgent } from '@/lib/agent/executor'
 import type { ExecutionTrigger } from '@/lib/agent/executor'
 
@@ -44,7 +43,7 @@ interface WebhookPayload {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
   // Meta/WhatsApp webhook verification
   const mode = request.nextUrl.searchParams.get('hub.mode')
@@ -52,17 +51,15 @@ export async function GET(
   const challenge = request.nextUrl.searchParams.get('hub.challenge')
 
   if (mode === 'subscribe' && challenge) {
-    // Get stored auth token for this agent
+    const { agentId: resolvedAgentId } = await params
     const authToken = token
 
-    const { valid, userId } = await getCredentialsByAuthToken(params.agentId, authToken || '')
+    const { valid, userId } = await getCredentialsByAuthToken(resolvedAgentId, authToken || '')
 
     if (valid && userId) {
-      console.log(`[WEBHOOK] Verified agent: ${params.agentId}`)
       return new NextResponse(challenge, { status: 200 })
     }
 
-    console.warn(`[WEBHOOK] Verification failed for agent: ${params.agentId}`)
     return new NextResponse('Forbidden', { status: 403 })
   }
 
@@ -73,22 +70,22 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
-  const agentId = params.agentId
-  const startTime = Date.now()
+  const { agentId } = await params
+  // start
 
   try {
-    console.log(`[WEBHOOK] Received message for agent: ${agentId}`)
+    // console.log(`[WEBHOOK] Received message for agent: ${agentId}`)
 
-    // Get signature from header (for verification)
-    const signature = request.headers.get('X-Hub-Signature-256') || ''
+    // Signature stored for future HMAC verification
+    // const signature = request.headers.get('X-Hub-Signature-256') || ''
 
     // Parse webhook payload
     const payload = (await request.json()) as WebhookPayload
 
     if (!payload.entry?.[0]?.changes?.[0]?.value?.messages) {
-      console.warn('[WEBHOOK] Invalid payload structure')
+      // console.warn('[WEBHOOK] Invalid payload structure')
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
@@ -101,19 +98,17 @@ export async function POST(
     for (const message of messages) {
       try {
         await processMessage(agentId, message, contacts[0], displayPhoneNumber)
-      } catch (err) {
-        console.error(`[WEBHOOK] Error processing message ${message.messageId}:`, err)
+      } catch (_) {
+        // console.error(`[WEBHOOK] Error processing message ${message.messageId}:`, err)
         // Continue processing other messages
       }
     }
 
-    const durationMs = Date.now() - startTime
-    console.log(`[WEBHOOK] Completed in ${durationMs}ms`)
+    // completed
 
     // Always return 200 to acknowledge receipt (Meta requires it)
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (err) {
-    console.error('[WEBHOOK] Error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
@@ -128,14 +123,14 @@ async function processMessage(
 ) {
   // Only process text messages
   if (message.type !== 'text' || !message.text) {
-    console.log(`[MSG] Skipping non-text message: ${message.type}`)
+    // console.log(`[MSG] Skipping non-text message: ${message.type}`)
     return
   }
 
   const senderPhone = message.from
   const senderName = contact?.profile?.name || senderPhone
 
-  console.log(`[MSG] From: ${senderName} (${senderPhone}) → "${message.text.substring(0, 50)}"`)
+  // console.log(`[MSG] From: ${senderName} (${senderPhone}) → "${message.text.substring(0, 50)}"`)
 
   // Create execution trigger
   const trigger: ExecutionTrigger = {
@@ -157,7 +152,7 @@ async function processMessage(
   // TODO: Update after database schema is created
   // const credentials = await getAgentCredentials(userId, agentId)
   // if (!credentials) {
-  //   console.error(`[MSG] Credentials not found for agent: ${agentId}`)
+  //   // console.error(`[MSG] Credentials not found for agent: ${agentId}`)
   //   return
   // }
 
@@ -165,7 +160,7 @@ async function processMessage(
   const result = await executeAgent(trigger)
 
   if (!result.success) {
-    console.warn(`[MSG] Execution failed: ${result.error}`)
+    // console.warn(`[MSG] Execution failed: ${result.error}`)
     // Still try to send a message to user
     await sendWhatsAppMessage(
       senderPhone,
@@ -189,7 +184,7 @@ async function sendWhatsAppMessage(
   recipientPhone: string,
   senderPhone: string,
   messageText: string,
-  agentId: string
+  _agentId: string
 ): Promise<boolean> {
   try {
     // Determine which API to use (Exotel for India, Meta official for others)
@@ -201,15 +196,19 @@ async function sendWhatsAppMessage(
       return await sendViaMetaAPI(recipientPhone, messageText)
     }
 
-    console.warn('[SEND] No WhatsApp API configured')
+    // console.warn('[SEND] No WhatsApp API configured')
     return false
-  } catch (err) {
-    console.error('[SEND] Failed to send WhatsApp message:', err)
+  } catch (_) {
+    // console.error('[SEND] Failed to send WhatsApp message:', err)
     return false
   }
 }
 
-async function sendViaExotel(recipientPhone: string, senderPhone: string, messageText: string): Promise<boolean> {
+async function sendViaExotel(
+  recipientPhone: string,
+  senderPhone: string,
+  messageText: string
+): Promise<boolean> {
   try {
     const res = await fetch(`${process.env.EXOTEL_API_URL}/v2/messages`, {
       method: 'POST',
@@ -226,14 +225,14 @@ async function sendViaExotel(recipientPhone: string, senderPhone: string, messag
     })
 
     if (res.ok) {
-      console.log(`[SEND] Sent to ${recipientPhone} via Exotel`)
+      // console.log(`[SEND] Sent to ${recipientPhone} via Exotel`)
       return true
     }
 
-    console.warn(`[SEND] Exotel error: ${res.statusText}`)
+    // console.warn(`[SEND] Exotel error: ${res.statusText}`)
     return false
-  } catch (err) {
-    console.error('[SEND] Exotel error:', err)
+  } catch (_) {
+    // console.error('[SEND] Exotel error:', err)
     return false
   }
 }
@@ -255,14 +254,14 @@ async function sendViaMetaAPI(recipientPhone: string, messageText: string): Prom
     })
 
     if (res.ok) {
-      console.log(`[SEND] Sent to ${recipientPhone} via Meta API`)
+      // console.log(`[SEND] Sent to ${recipientPhone} via Meta API`)
       return true
     }
 
-    console.warn(`[SEND] Meta API error: ${res.statusText}`)
+    // console.warn(`[SEND] Meta API error: ${res.statusText}`)
     return false
-  } catch (err) {
-    console.error('[SEND] Meta API error:', err)
+  } catch (_) {
+    // console.error('[SEND] Meta API error:', err)
     return false
   }
 }
@@ -288,8 +287,8 @@ async function logConversation(
       channel: 'whatsapp',
       created_at: new Date().toISOString(),
     })
-  } catch (err) {
-    console.error('[LOG] Failed to log conversation:', err)
+  } catch (_) {
+    // console.error('[LOG] Failed to log conversation:', err)
     // Don't throw - logging failure shouldn't block the flow
   }
 }

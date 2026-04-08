@@ -16,24 +16,34 @@ import { activateKillSwitch } from '@/lib/agent/safety'
 
 // ─── Redis Connection ────────────────────────────────────────────────────────
 
-function getRedisConnection() {
+function getRedisConnection(): any {
+  const redisUrl = process.env.REDIS_URL
+
+  if (redisUrl) {
+    // Use the Redis URL directly (e.g., from Railway or Upstash)
+    return redisUrl
+  }
+
+  // Fallback to individual env vars
   return {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || undefined,
-    maxRetriesPerRequest: null as null,
+    maxRetriesPerRequest: null,
   }
 }
 
 // ─── Queue Singleton ─────────────────────────────────────────────────────────
 
-let queueInstance: Queue<AgentJobData> | null = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let queueInstance: any = null
 let queueEventsInstance: QueueEvents | null = null
 
 function getQueue(): Queue<AgentJobData> {
   if (!queueInstance) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     queueInstance = new Queue<AgentJobData>(AGENT_QUEUE_NAME, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection() as any,
       defaultJobOptions: {
         attempts: 3,
         backoff: {
@@ -50,16 +60,17 @@ function getQueue(): Queue<AgentJobData> {
       },
     })
   }
-  return queueInstance
+  return queueInstance!
 }
 
 function getQueueEvents(): QueueEvents {
   if (!queueEventsInstance) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     queueEventsInstance = new QueueEvents(AGENT_QUEUE_NAME, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection() as any,
     })
   }
-  return queueEventsInstance
+  return queueEventsInstance!
 }
 
 // ─── Queue a One-Time Agent Job ──────────────────────────────────────────────
@@ -100,9 +111,7 @@ export interface ScheduleJobOptions {
   timezone?: string
 }
 
-export async function scheduleAgentJob(
-  options: ScheduleJobOptions
-): Promise<{ jobId: string }> {
+export async function scheduleAgentJob(options: ScheduleJobOptions): Promise<{ jobId: string }> {
   const queue = getQueue()
 
   const jobId = options.jobId ?? `scheduled-${options.trigger.agentId}-${Date.now()}`
@@ -121,7 +130,7 @@ export async function scheduleAgentJob(
 
   console.log(
     `[Producer] Scheduled recurring job ${jobId} for agent ${options.trigger.agentId} ` +
-    `with cron: ${options.cronExpression}`
+      `with cron: ${options.cronExpression}`
   )
 
   return { jobId }
@@ -198,10 +207,7 @@ export async function getJobStatus(jobId: string): Promise<JobStatus | null> {
 
 // ─── Wait for Job Completion ─────────────────────────────────────────────────
 
-export async function waitForJob(
-  jobId: string,
-  timeoutMs: number = 60_000
-): Promise<unknown> {
+export async function waitForJob(jobId: string, timeoutMs: number = 60_000): Promise<unknown> {
   const queue = getQueue()
   const job = await queue.getJob(jobId)
 
@@ -212,8 +218,7 @@ export async function waitForJob(
   const events = getQueueEvents()
   await events.waitUntilReady()
 
-  const result = await job.waitUntilFinished(events, timeoutMs)
-  return result
+  return await job.waitUntilFinished(events, timeoutMs)
 }
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────

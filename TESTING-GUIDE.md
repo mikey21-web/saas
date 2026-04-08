@@ -3,6 +3,7 @@
 ## Overview
 
 This guide covers comprehensive testing of the payment webhook infrastructure for agent deployment using:
+
 - **Test-Driven Development Dashboard** — `/test-driven-development`
 - **WebApp Testing Documentation** — `/webapp-testing`
 - **Thunder Client** — API testing tool
@@ -13,12 +14,15 @@ This guide covers comprehensive testing of the payment webhook infrastructure fo
 ## Quick Start (3 Minutes)
 
 ### Step 1: Visit Test Dashboard
+
 ```
 http://localhost:3000/test-driven-development
 ```
 
 ### Step 2: Run All Tests
+
 Click "Run All Tests" button to execute full test suite:
+
 - ✓ Razorpay Webhook Verification
 - ✓ Stripe Webhook Verification
 - ✓ Agent Creation with skipPayment
@@ -26,6 +30,7 @@ Click "Run All Tests" button to execute full test suite:
 - ✓ Activity Logging
 
 ### Step 3: Check Results
+
 - Green checkmarks = passing tests
 - Red Xs = failed tests
 - See details for each test
@@ -37,6 +42,7 @@ Click "Run All Tests" button to execute full test suite:
 ### 1. Test-Driven Development Page (`/test-driven-development`)
 
 **What it tests:**
+
 - Razorpay webhook signature verification
 - Stripe webhook signature verification
 - Agent creation flow
@@ -44,12 +50,14 @@ Click "Run All Tests" button to execute full test suite:
 - Activity logging
 
 **How it works:**
+
 1. Runs automated tests that simulate payment flows
 2. Verifies agent status changes from 'pending' → 'active'
 3. Confirms activity logs are created
 4. Shows pass/fail status with timing
 
 **Mock Payment Simulator:**
+
 - "Test Razorpay Flow" button — simulates Razorpay payment
 - "Test Stripe Flow" button — simulates Stripe payment
 - No real charges, instant feedback
@@ -57,6 +65,7 @@ Click "Run All Tests" button to execute full test suite:
 ### 2. WebApp Testing Page (`/webapp-testing`)
 
 **What it provides:**
+
 - Detailed API endpoint documentation
 - cURL examples
 - Node.js test code
@@ -65,6 +74,7 @@ Click "Run All Tests" button to execute full test suite:
 - Troubleshooting guide
 
 **Key sections:**
+
 1. Agent Creation endpoint
 2. Razorpay Webhook endpoint
 3. Stripe Webhook endpoint
@@ -77,11 +87,13 @@ Click "Run All Tests" button to execute full test suite:
 ### Installation
 
 **VS Code:**
+
 1. Open Extensions (Ctrl+Shift+X)
 2. Search "Thunder Client"
 3. Install official extension
 
 **Standalone:**
+
 - Download from https://www.thunderclient.com/
 
 ### Importing Test Collection
@@ -95,12 +107,14 @@ Click "Run All Tests" button to execute full test suite:
 ### Running Tests in Order
 
 **Step 1: Create Agent (skipPayment)**
+
 - Request: `POST /api/onboard/deploy`
 - Body: Agent config with `skipPayment: true`
 - Response: Returns `agentId`, status will be 'pending'
 - **SAVE THIS AGENT ID** — you'll need it for next steps
 
 **Step 2: Trigger Razorpay Webhook**
+
 - Request: `POST /api/webhooks/razorpay`
 - Header: `x-razorpay-signature: test-signature`
 - Body: Payment authorized event with agentId in notes
@@ -108,6 +122,7 @@ Click "Run All Tests" button to execute full test suite:
 - **Check:** Agent status should now be 'active'
 
 **Step 3: Trigger Stripe Webhook**
+
 - Request: `POST /api/webhooks/stripe`
 - Header: `stripe-signature: test-signature`
 - Body: Checkout session completed event
@@ -115,6 +130,7 @@ Click "Run All Tests" button to execute full test suite:
 - **Check:** Agent status should be 'active', deployed_at set
 
 **Step 4: Use Mock Payment Simulator**
+
 - Request: `POST /api/webapp-testing/mock-payment`
 - Body: agentId, userId, provider (razorpay|stripe)
 - Response: Returns newStatus 'active', paymentId
@@ -124,17 +140,18 @@ Click "Run All Tests" button to execute full test suite:
 
 When using Thunder Client requests, update these placeholders:
 
-| Placeholder | Example | Where to Get |
-|---|---|---|
-| `[AGENT_ID_FROM_STEP_1]` | `550e8400-e29b-41d4-a716-446655440000` | From Step 1 response |
-| `[USER_ID]` | `test-user-123` | Same userId used in Step 1 |
-| `[SESSION_ID]` | `cs_test_123` | Generate unique ID per test |
+| Placeholder              | Example                                | Where to Get                |
+| ------------------------ | -------------------------------------- | --------------------------- |
+| `[AGENT_ID_FROM_STEP_1]` | `550e8400-e29b-41d4-a716-446655440000` | From Step 1 response        |
+| `[USER_ID]`              | `test-user-123`                        | Same userId used in Step 1  |
+| `[SESSION_ID]`           | `cs_test_123`                          | Generate unique ID per test |
 
 ---
 
 ## Manual cURL Testing
 
 ### Create Agent
+
 ```bash
 curl -X POST http://localhost:3000/api/onboard/deploy \
   -H "Content-Type: application/json" \
@@ -160,6 +177,7 @@ curl -X POST http://localhost:3000/api/onboard/deploy \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -169,6 +187,7 @@ curl -X POST http://localhost:3000/api/onboard/deploy \
 ```
 
 ### Trigger Razorpay Webhook
+
 ```bash
 curl -X POST http://localhost:3000/api/webhooks/razorpay \
   -H "Content-Type: application/json" \
@@ -196,6 +215,7 @@ curl -X POST http://localhost:3000/api/webhooks/razorpay \
 ## Using Code Rabbit for Code Quality
 
 ### What Code Rabbit Does
+
 - Static analysis of payment-related code
 - Detects security issues (signature verification)
 - Checks error handling
@@ -204,17 +224,20 @@ curl -X POST http://localhost:3000/api/webhooks/razorpay \
 ### Key Files to Review
 
 **Webhook Handlers:**
+
 - `app/api/webhooks/razorpay/route.ts` — payment verification
 - `app/api/webhooks/stripe/route.ts` — signature check
 - `app/api/checkout/stripe/route.ts` — session creation
 
 **Database:**
+
 - `supabase/migrations/01_init_schema.sql` — activity_logs RLS
 - `app/api/onboard/deploy/route.ts` — agent creation
 
 ### Code Rabbit Checks
 
 Run in VS Code or terminal:
+
 ```bash
 # Install Code Rabbit extension
 npm install -g code-rabbit
@@ -224,6 +247,7 @@ code-rabbit analyze app/api/webhooks app/api/checkout
 ```
 
 **Expected Results:**
+
 - ✓ Signature verification correct
 - ✓ Error handling present
 - ✓ Database operations use RLS
@@ -236,6 +260,7 @@ code-rabbit analyze app/api/webhooks app/api/checkout
 After running webhook tests, verify database changes:
 
 ### Check Agent Status
+
 ```sql
 SELECT id, status, deployed_at
 FROM agents
@@ -247,6 +272,7 @@ LIMIT 1;
 **Expected:** status='active', deployed_at populated
 
 ### Check Activity Logs
+
 ```sql
 SELECT id, action, details, created_at
 FROM activity_logs
@@ -258,6 +284,7 @@ ORDER BY created_at DESC;
 **Expected:** One entry per successful payment with paymentId and plan details
 
 ### Check RLS Policies
+
 ```sql
 SELECT schemaname, tablename, policyname
 FROM pg_policies
@@ -300,6 +327,7 @@ WHERE tablename IN ('agents', 'activity_logs');
 ### Full Flow (10 minutes)
 
 1. **Open Test Dashboard**
+
    ```
    http://localhost:3000/test-driven-development
    ```
@@ -337,6 +365,7 @@ WHERE tablename IN ('agents', 'activity_logs');
    - Stripe: https://dashboard.stripe.com/
 
 2. **Update Environment**
+
    ```env
    RAZORPAY_KEY_ID=rzp_test_xxxxx
    RAZORPAY_KEY_SECRET=xxxxx
@@ -360,12 +389,14 @@ WHERE tablename IN ('agents', 'activity_logs');
 ### Webhook Not Triggering Agent Update
 
 **Check:**
-- Is client_reference_id format correct? `agent_[agentId]_[userId]`
+
+- Is client*reference_id format correct? `agent*[agentId]\_[userId]`
 - Does agentId exist in agents table?
 - Does userId match agent's user_id?
 - Are RLS policies allowing service role updates?
 
 **Fix:**
+
 ```sql
 -- Check RLS policies
 SELECT * FROM pg_policies WHERE tablename = 'agents';
@@ -377,11 +408,13 @@ SELECT id, user_id, status FROM agents WHERE id = '[agentId]';
 ### Activity Logs Not Recording
 
 **Check:**
+
 - Does activity_logs table exist?
 - Are RLS policies configured?
 - Is user_id valid?
 
 **Fix:**
+
 ```sql
 -- Check table structure
 SELECT column_name, data_type
@@ -397,11 +430,13 @@ WHERE c.relname = 'activity_logs';
 ### Signature Verification Failing
 
 **Check:**
+
 - Is webhook secret configured?
 - Is signature header present?
 - Is body not modified before verification?
 
 **Fix:**
+
 ```typescript
 // Signature must be verified on raw body text
 const body = await request.text()
@@ -413,13 +448,13 @@ const signature = request.headers.get('x-razorpay-signature')
 
 ## Summary
 
-| Component | Test Method | Location | Expected Result |
-|---|---|---|---|
-| Agent Creation | Dashboard/Thunder Client | `/api/onboard/deploy` | Returns agentId, status='pending' |
-| Razorpay Webhook | Dashboard/Thunder Client | `/api/webhooks/razorpay` | Agent activated, activity logged |
-| Stripe Webhook | Dashboard/Thunder Client | `/api/webhooks/stripe` | Agent activated, activity logged |
-| Mock Simulator | Dashboard buttons | `/api/webapp-testing/mock-payment` | Instant feedback, no DB changes needed |
-| Database | SQL queries | Supabase dashboard | Status='active', deployed_at set |
+| Component        | Test Method              | Location                           | Expected Result                        |
+| ---------------- | ------------------------ | ---------------------------------- | -------------------------------------- |
+| Agent Creation   | Dashboard/Thunder Client | `/api/onboard/deploy`              | Returns agentId, status='pending'      |
+| Razorpay Webhook | Dashboard/Thunder Client | `/api/webhooks/razorpay`           | Agent activated, activity logged       |
+| Stripe Webhook   | Dashboard/Thunder Client | `/api/webhooks/stripe`             | Agent activated, activity logged       |
+| Mock Simulator   | Dashboard buttons        | `/api/webapp-testing/mock-payment` | Instant feedback, no DB changes needed |
+| Database         | SQL queries              | Supabase dashboard                 | Status='active', deployed_at set       |
 
 **All tests pass = Payment infrastructure is production-ready** ✓
 
@@ -428,6 +463,7 @@ const signature = request.headers.get('x-razorpay-signature')
 ## Next Steps
 
 After confirming all tests pass:
+
 1. ✓ Update landing page with Task Assignment workflow
 2. ✓ Build mock notification system
 3. ✓ Add Workflows tab to dashboard

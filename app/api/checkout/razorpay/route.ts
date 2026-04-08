@@ -33,11 +33,7 @@ export async function POST(request: NextRequest) {
     const orderData = await razorpayResponse.json()
 
     if (!razorpayResponse.ok) {
-      console.error('Razorpay error:', orderData)
-      return NextResponse.json(
-        { error: 'Failed to create order' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -46,10 +42,6 @@ export async function POST(request: NextRequest) {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     })
   } catch (error) {
-    console.error('Razorpay checkout error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create order' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }

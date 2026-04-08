@@ -59,26 +59,29 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>(mockContacts)
   const [search, setSearch] = useState('')
 
-  const filtered = contacts.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
+  const filtered = contacts.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search) ||
+      c.email.toLowerCase().includes(search.toLowerCase())
   )
 
   const handleToggleConsent = (contactId: number, consentType: string) => {
-    setContacts(contacts.map(c => {
-      if (c.id === contactId) {
-        return {
-          ...c,
-          [consentType]: !c[consentType as keyof Contact],
+    setContacts(
+      contacts.map((c) => {
+        if (c.id === contactId) {
+          return {
+            ...c,
+            [consentType]: !c[consentType as keyof Contact],
+          }
         }
-      }
-      return c
-    }))
+        return c
+      })
+    )
   }
 
   const handleDelete = (id: number) => {
-    setContacts(contacts.filter(c => c.id !== id))
+    setContacts(contacts.filter((c) => c.id !== id))
   }
 
   return (
@@ -86,9 +89,9 @@ export default function ContactsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
+          <button disabled className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-sm opacity-50">
             <Plus size={16} />
-            Import Contacts
+            Import (Coming Soon)
           </button>
         </div>
         <p className="text-gray-600">Manage contact consent for WhatsApp, SMS, calls, and email</p>
@@ -125,7 +128,7 @@ export default function ContactsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filtered.map(contact => (
+              {filtered.map((contact) => (
                 <tr key={contact.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
@@ -217,7 +220,9 @@ export default function ContactsPage() {
       {/* Info Box */}
       <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-900">
-          <strong>TRAI Compliance:</strong> Contacts are checked against DND (Do Not Disturb) before sending SMS or making calls. WhatsApp consent is also enforced. Inbound messages grant implicit consent.
+          <strong>TRAI Compliance:</strong> Contacts are checked against DND (Do Not Disturb) before
+          sending SMS or making calls. WhatsApp consent is also enforced. Inbound messages grant
+          implicit consent.
         </p>
       </div>
     </div>

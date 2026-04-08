@@ -5,7 +5,10 @@
 
 const EXOTEL_BASE = `https://${process.env.EXOTEL_API_KEY}:${process.env.EXOTEL_API_TOKEN}@api.exotel.com/v1/Accounts/${process.env.EXOTEL_SID}`
 
-export async function sendSMS(to: string, message: string): Promise<{ success: boolean; sid?: string; error?: string }> {
+export async function sendSMS(
+  to: string,
+  message: string
+): Promise<{ success: boolean; sid?: string; error?: string }> {
   try {
     const body = new URLSearchParams({
       From: process.env.EXOTEL_VIRTUAL_NUMBER ?? '',
@@ -17,14 +20,18 @@ export async function sendSMS(to: string, message: string): Promise<{ success: b
       const text = await res.text()
       return { success: false, error: `Exotel SMS failed: ${text}` }
     }
-    const data = await res.json() as { SMSMessage?: { Sid: string } }
+    const data = (await res.json()) as { SMSMessage?: { Sid: string } }
     return { success: true, sid: data.SMSMessage?.Sid }
   } catch (e: unknown) {
     return { success: false, error: (e as Error).message }
   }
 }
 
-export async function makeCall(to: string, callerId: string, url: string): Promise<{ success: boolean; callSid?: string; error?: string }> {
+export async function makeCall(
+  to: string,
+  callerId: string,
+  url: string
+): Promise<{ success: boolean; callSid?: string; error?: string }> {
   try {
     const body = new URLSearchParams({
       From: callerId,
@@ -37,7 +44,7 @@ export async function makeCall(to: string, callerId: string, url: string): Promi
       const text = await res.text()
       return { success: false, error: `Exotel call failed: ${text}` }
     }
-    const data = await res.json() as { Call?: { Sid: string } }
+    const data = (await res.json()) as { Call?: { Sid: string } }
     return { success: true, callSid: data.Call?.Sid }
   } catch (e: unknown) {
     return { success: false, error: (e as Error).message }

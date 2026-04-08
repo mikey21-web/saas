@@ -13,9 +13,19 @@ interface TestResult {
 
 export default function TestDrivenDevelopmentPage() {
   const [tests, setTests] = useState<TestResult[]>([
-    { id: 'razorpay-webhook', name: 'Razorpay Webhook Verification', status: 'passed', duration: 245 },
+    {
+      id: 'razorpay-webhook',
+      name: 'Razorpay Webhook Verification',
+      status: 'passed',
+      duration: 245,
+    },
     { id: 'stripe-webhook', name: 'Stripe Webhook Verification', status: 'passed', duration: 198 },
-    { id: 'agent-creation', name: 'Agent Creation with skipPayment Flag', status: 'passed', duration: 156 },
+    {
+      id: 'agent-creation',
+      name: 'Agent Creation with skipPayment Flag',
+      status: 'passed',
+      duration: 156,
+    },
     { id: 'payment-activation', name: 'Agent Activation After Payment', status: 'pending' },
     { id: 'activity-logging', name: 'Payment Activity Logging', status: 'pending' },
     { id: 'invoice-generation', name: 'Invoice Generation', status: 'pending' },
@@ -24,11 +34,7 @@ export default function TestDrivenDevelopmentPage() {
 
   const runTest = async (testId: string) => {
     setSelectedTest(testId)
-    setTests(prev =>
-      prev.map(t =>
-        t.id === testId ? { ...t, status: 'running' } : t
-      )
-    )
+    setTests((prev) => prev.map((t) => (t.id === testId ? { ...t, status: 'running' } : t)))
 
     try {
       const response = await fetch('/api/test-driven-development', {
@@ -39,8 +45,8 @@ export default function TestDrivenDevelopmentPage() {
 
       const result = await response.json()
 
-      setTests(prev =>
-        prev.map(t =>
+      setTests((prev) =>
+        prev.map((t) =>
           t.id === testId
             ? {
                 ...t,
@@ -52,8 +58,8 @@ export default function TestDrivenDevelopmentPage() {
         )
       )
     } catch (err) {
-      setTests(prev =>
-        prev.map(t =>
+      setTests((prev) =>
+        prev.map((t) =>
           t.id === testId
             ? {
                 ...t,
@@ -68,13 +74,13 @@ export default function TestDrivenDevelopmentPage() {
 
   const runAllTests = async () => {
     for (const test of tests) {
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise((r) => setTimeout(r, 300))
       await runTest(test.id)
     }
   }
 
-  const passedCount = tests.filter(t => t.status === 'passed').length
-  const failedCount = tests.filter(t => t.status === 'failed').length
+  const passedCount = tests.filter((t) => t.status === 'passed').length
+  const failedCount = tests.filter((t) => t.status === 'failed').length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
@@ -104,7 +110,9 @@ export default function TestDrivenDevelopmentPage() {
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-200">
             <div className="text-sm text-blue-700">Pending</div>
-            <div className="text-2xl font-bold text-blue-600">{tests.filter(t => t.status === 'pending').length}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {tests.filter((t) => t.status === 'pending').length}
+            </div>
           </div>
         </div>
 
@@ -112,7 +120,7 @@ export default function TestDrivenDevelopmentPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
           <button
             onClick={runAllTests}
-            disabled={tests.some(t => t.status === 'running')}
+            disabled={tests.some((t) => t.status === 'running')}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
           >
             Run All Tests
@@ -121,19 +129,19 @@ export default function TestDrivenDevelopmentPage() {
 
         {/* Test Results */}
         <div className="space-y-4">
-          {tests.map(test => (
+          {tests.map((test) => (
             <div key={test.id} className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-3 flex-1">
                   {test.status === 'passed' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
                   {test.status === 'failed' && <AlertCircle className="w-5 h-5 text-red-600" />}
-                  {test.status === 'running' && <Clock className="w-5 h-5 text-blue-600 animate-spin" />}
+                  {test.status === 'running' && (
+                    <Clock className="w-5 h-5 text-blue-600 animate-spin" />
+                  )}
                   {test.status === 'pending' && <Clock className="w-5 h-5 text-gray-400" />}
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{test.name}</h3>
-                    {test.message && (
-                      <p className="text-sm text-gray-600 mt-1">{test.message}</p>
-                    )}
+                    {test.message && <p className="text-sm text-gray-600 mt-1">{test.message}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

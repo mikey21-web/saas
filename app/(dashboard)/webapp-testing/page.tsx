@@ -240,7 +240,9 @@ createAgent()
         <div className="space-y-8">
           {/* Agent Creation Test */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Create Agent with skipPayment</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              1. Create Agent with skipPayment
+            </h2>
             <p className="text-gray-600 mb-4">
               First step: Create an agent in 'pending' status before payment
             </p>
@@ -283,7 +285,9 @@ Content-Type: application/json
 
           {/* Razorpay Webhook Test */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Razorpay Webhook (INR Payments)</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              2. Razorpay Webhook (INR Payments)
+            </h2>
             <p className="text-gray-600 mb-4">
               Test payment received webhook that activates the agent
             </p>
@@ -327,7 +331,9 @@ Content-Type: application/json
 
           {/* Stripe Webhook Test */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Stripe Webhook (USD Payments)</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              3. Stripe Webhook (USD Payments)
+            </h2>
             <p className="text-gray-600 mb-4">
               Test checkout completion webhook that activates the agent
             </p>
@@ -390,15 +396,21 @@ Content-Type: application/json
             <div className="space-y-4">
               <div className="p-4 bg-green-50 border border-green-200 rounded">
                 <h3 className="font-semibold text-green-900 mb-2">✓ Agent Creation Success</h3>
-                <p className="text-sm text-green-800">Returns: agentId, status 'pending', deployed_at null</p>
+                <p className="text-sm text-green-800">
+                  Returns: agentId, status 'pending', deployed_at null
+                </p>
               </div>
               <div className="p-4 bg-blue-50 border border-blue-200 rounded">
                 <h3 className="font-semibold text-blue-900 mb-2">✓ Webhook Processing</h3>
-                <p className="text-sm text-blue-800">Webhook signature verified, agent status updated to 'active', deployed_at set</p>
+                <p className="text-sm text-blue-800">
+                  Webhook signature verified, agent status updated to 'active', deployed_at set
+                </p>
               </div>
               <div className="p-4 bg-purple-50 border border-purple-200 rounded">
                 <h3 className="font-semibold text-purple-900 mb-2">✓ Activity Logging</h3>
-                <p className="text-sm text-purple-800">Check activity_logs table for payment_received entry with paymentId and plan</p>
+                <p className="text-sm text-purple-800">
+                  Check activity_logs table for payment_received entry with paymentId and plan
+                </p>
               </div>
             </div>
           </div>
@@ -409,18 +421,28 @@ Content-Type: application/json
             <div className="space-y-3 text-sm text-gray-700">
               <div>
                 <h3 className="font-semibold text-gray-900">Webhook not triggering agent update</h3>
-                <p className="text-gray-600">• Ensure client_reference_id format is correct: agent_[agentId]_[userId]</p>
+                <p className="text-gray-600">
+                  • Ensure client_reference_id format is correct: agent_[agentId]_[userId]
+                </p>
                 <p className="text-gray-600">• Verify agentId and userId match the created agent</p>
-                <p className="text-gray-600">• Check Supabase RLS policies allow service role updates</p>
+                <p className="text-gray-600">
+                  • Check Supabase RLS policies allow service role updates
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Activity not logged</h3>
-                <p className="text-gray-600">• Ensure activity_logs table has correct RLS policies</p>
-                <p className="text-gray-600">• Check user_id in webhook matches the created agent's user_id</p>
+                <p className="text-gray-600">
+                  • Ensure activity_logs table has correct RLS policies
+                </p>
+                <p className="text-gray-600">
+                  • Check user_id in webhook matches the created agent's user_id
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Agent still showing as 'pending'</h3>
-                <p className="text-gray-600">• Webhook might have failed silently - check server logs</p>
+                <p className="text-gray-600">
+                  • Webhook might have failed silently - check server logs
+                </p>
                 <p className="text-gray-600">• Verify payload structure matches expected format</p>
               </div>
             </div>

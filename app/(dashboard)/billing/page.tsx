@@ -1,7 +1,8 @@
 'use client'
 
 import { Download, AlertCircle, CheckCircle, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { authFetch, useAuthSession } from '@/lib/auth/client'
 
 interface UsageMetric {
   name: string
@@ -20,35 +21,93 @@ interface Invoice {
 }
 
 export default function BillingPage() {
+  const { user, isLoaded } = useAuthSession()
   const [activeTab, setActiveTab] = useState<'current' | 'addons' | 'invoices'>('current')
+  const [realUsage, setRealUsage] = useState({ agentCount: 0, executionsThisMonth: 0 })
+
+  useEffect(() => {
+    if (!isLoaded || !user) return
+    authFetch('/api/billing/summary')
+      .then((r) => r.json())
+      .then((d) => setRealUsage(d))
+      .catch(() => {})
+  }, [isLoaded, user])
 
   const currentPlan = {
-    name: 'Agent',
-    price: '₹2,499',
+    name: 'Free Trial',
+    price: '₹0',
     billingCycle: 'Monthly',
-    nextBilling: '2026-04-28',
+    nextBilling: '—',
     status: 'active',
   }
 
   const usageMetrics: UsageMetric[] = [
-    { name: 'Phone Calls', used: 67, limit: 100, unit: 'calls/month', color: 'bg-blue-100' },
-    { name: 'Emails', used: 523, limit: 1000, unit: 'emails/month', color: 'bg-green-100' },
-    { name: 'WhatsApp Messages', used: 89, limit: 200, unit: 'messages/month', color: 'bg-purple-100' },
-    { name: 'API Requests', used: 2847, limit: 10000, unit: 'requests/month', color: 'bg-orange-100' },
+    {
+      name: 'Active Agents',
+      used: realUsage.agentCount,
+      limit: 3,
+      unit: 'agents',
+      color: 'bg-blue-100',
+    },
+    {
+      name: 'AI Runs This Month',
+      used: realUsage.executionsThisMonth,
+      limit: 100,
+      unit: 'runs/month',
+      color: 'bg-green-100',
+    },
+    {
+      name: 'WhatsApp Messages',
+      used: 0,
+      limit: 200,
+      unit: 'messages/month',
+      color: 'bg-purple-100',
+    },
+    { name: 'Emails Sent', used: 0, limit: 1000, unit: 'emails/month', color: 'bg-orange-100' },
   ]
 
   const addons = [
     { id: 1, name: '500 Extra Calls', price: '₹499', purchased: true, renewDate: '2026-04-28' },
     { id: 2, name: '2000 Extra WhatsApp', price: '₹399', purchased: false, renewDate: null },
     { id: 3, name: '5000 Extra Emails', price: '₹199', purchased: false, renewDate: null },
-    { id: 4, name: 'diyaa.ai Powered AI (₹499/mo)', price: '₹499', purchased: true, renewDate: '2026-04-28' },
+    {
+      id: 4,
+      name: 'diyaa.ai Powered AI (₹499/mo)',
+      price: '₹499',
+      purchased: true,
+      renewDate: '2026-04-28',
+    },
   ]
 
   const invoices: Invoice[] = [
-    { id: 'INV-001', date: '2026-03-28', amount: 2499, status: 'paid', description: 'Agent Plan (monthly)' },
-    { id: 'INV-002', date: '2026-02-28', amount: 2498, status: 'paid', description: 'Agent Plan (monthly)' },
-    { id: 'INV-003', date: '2026-01-28', amount: 2499, status: 'paid', description: 'Agent Plan (monthly)' },
-    { id: 'INV-004', date: '2025-12-28', amount: 2499, status: 'paid', description: 'Agent Plan (monthly)' },
+    {
+      id: 'INV-001',
+      date: '2026-03-28',
+      amount: 2499,
+      status: 'paid',
+      description: 'Agent Plan (monthly)',
+    },
+    {
+      id: 'INV-002',
+      date: '2026-02-28',
+      amount: 2498,
+      status: 'paid',
+      description: 'Agent Plan (monthly)',
+    },
+    {
+      id: 'INV-003',
+      date: '2026-01-28',
+      amount: 2499,
+      status: 'paid',
+      description: 'Agent Plan (monthly)',
+    },
+    {
+      id: 'INV-004',
+      date: '2025-12-28',
+      amount: 2499,
+      status: 'paid',
+      description: 'Agent Plan (monthly)',
+    },
   ]
 
   return (
@@ -62,8 +121,12 @@ export default function BillingPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Current Plan: {currentPlan.name}</h3>
-            <p className="text-sm text-gray-600">{currentPlan.price} / {currentPlan.billingCycle}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              Current Plan: {currentPlan.name}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {currentPlan.price} / {currentPlan.billingCycle}
+            </p>
           </div>
           <span className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
             <CheckCircle size={16} />
@@ -123,7 +186,7 @@ export default function BillingPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b border-gray-200">
-        {(['current', 'addons', 'invoices'] as const).map(tab => (
+        {(['current', 'addons', 'invoices'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -157,7 +220,7 @@ export default function BillingPage() {
 
       {activeTab === 'addons' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {addons.map(addon => (
+          {addons.map((addon) => (
             <div key={addon.id} className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -187,19 +250,26 @@ export default function BillingPage() {
 
       {activeTab === 'invoices' && (
         <div className="space-y-3">
-          {invoices.map(invoice => (
-            <div key={invoice.id} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+          {invoices.map((invoice) => (
+            <div
+              key={invoice.id}
+              className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between"
+            >
               <div>
                 <p className="font-medium text-gray-900">{invoice.description}</p>
-                <p className="text-sm text-gray-600">{invoice.id} • {invoice.date}</p>
+                <p className="text-sm text-gray-600">
+                  {invoice.id} • {invoice.date}
+                </p>
               </div>
               <div className="flex items-center gap-4">
                 <p className="font-bold text-gray-900">₹{invoice.amount.toLocaleString()}</p>
-                <span className={`text-xs font-medium px-2 py-1 rounded ${
-                  invoice.status === 'paid'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-yellow-100 text-yellow-700'
-                }`}>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded ${
+                    invoice.status === 'paid'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
                   {invoice.status === 'paid' ? '✓ Paid' : '⏳ Pending'}
                 </span>
                 <button className="p-2 hover:bg-gray-100 rounded transition-colors">

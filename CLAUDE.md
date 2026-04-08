@@ -39,6 +39,7 @@ We solve **₹50L-1.3Cr annual leakage** problems for Indian SMBs using multi-ag
 ## Competitive Landscape
 
 ### actionagents.io
+
 - ✅ 12 marketing templates (Cold Outreach, LinkedIn Publisher, etc.)
 - ✅ 449 skills marketplace (ClawHub)
 - ✅ Single-agent design (simple, low friction)
@@ -48,6 +49,7 @@ We solve **₹50L-1.3Cr annual leakage** problems for Indian SMBs using multi-ag
 - ❌ Only solves marketing problems
 
 ### diyaa.ai (Our Position)
+
 - ✅ Multi-agent operational workflows
 - ✅ Business interview customization
 - ✅ Solves ₹50L+ problems
@@ -114,12 +116,14 @@ NOT BUILDING (Phase 1):
 ## Phase 1 Scope (6 Weeks)
 
 ### Week 1-2: Smart Deploy Interview Engine
+
 - Real-time streaming interview (Groq/Gemini)
 - Business onboarding wizard (4 questions)
 - Extract config from conversational context
 - Agent identity card (phone, email, WhatsApp, status)
 
 ### Week 3-4: Task Assignment Workflow
+
 - **5-Agent Orchestration:**
   1. Parser Agent — parses Monday meeting notes
   2. Router Agent — assigns tasks to team members
@@ -138,12 +142,14 @@ NOT BUILDING (Phase 1):
   ```
 
 ### Week 5-6: Wire Real Channels
+
 - Exotel SMS outbound (task assignments)
 - Resend email (task summaries)
 - WhatsApp Official API (real-time notifications)
 - Webhook handlers for inbound messages
 
 ### Testing & Launch Prep
+
 - Run 3 manual end-to-end tests
 - Create landing page
 - Setup Razorpay + Stripe
@@ -154,6 +160,7 @@ NOT BUILDING (Phase 1):
 ## The 3 Launch Workflows (Phase 1)
 
 ### 1. Task Assignment (Operations)
+
 **Problem:** Monday meetings → WhatsApp task assignment → evening report
 **TAM:** 1M SMBs in India
 **Pricing:** ₹2,499/mo
@@ -162,6 +169,7 @@ NOT BUILDING (Phase 1):
 **Revenue Potential:** ₹2,499 × 1M = ₹2,499Cr TAM
 
 ### 2. Clinic Patient No-Shows (Healthcare)
+
 **Problem:** ₹50-125L annual revenue lost to no-shows
 **TAM:** 100K clinics in India
 **Pricing:** ₹4,999/mo
@@ -170,6 +178,7 @@ NOT BUILDING (Phase 1):
 **Revenue Potential:** ₹4,999 × 100K = ₹500Cr TAM
 
 ### 3. Billing Automation (Consulting/Finance)
+
 **Problem:** ₹78L-1.3Cr annual billing leakage per firm
 **TAM:** 50K consulting firms
 **Pricing:** ₹4,999/mo
@@ -201,6 +210,7 @@ Enterprise: ₹12,000/mo
 ```
 
 **Add-on Packs:**
+
 - 500 extra tasks: ₹499
 - Custom AI model: ₹999/mo
 
@@ -208,21 +218,22 @@ Enterprise: ₹12,000/mo
 
 ## Timeline & Milestones
 
-| Timeline | Milestone | Target |
-|----------|-----------|--------|
-| **Weeks 1-2** | Smart Deploy ready | Interview flow live |
-| **Weeks 3-4** | Task Assignment MVP | End-to-end working |
-| **Weeks 5-6** | Real channels wired | SMS/Email/WhatsApp live |
-| **Week 7 (Day 1)** | Launch diyaa.ai | Day 1 customers |
-| **Weeks 8-10** | Add Clinic + Billing | 3 workflows live |
-| **Month 2** | GTM blitz | 30-50 customers |
-| **Month 3** | Hit 100 customers | Ready for Series A prep |
+| Timeline           | Milestone            | Target                  |
+| ------------------ | -------------------- | ----------------------- |
+| **Weeks 1-2**      | Smart Deploy ready   | Interview flow live     |
+| **Weeks 3-4**      | Task Assignment MVP  | End-to-end working      |
+| **Weeks 5-6**      | Real channels wired  | SMS/Email/WhatsApp live |
+| **Week 7 (Day 1)** | Launch diyaa.ai      | Day 1 customers         |
+| **Weeks 8-10**     | Add Clinic + Billing | 3 workflows live        |
+| **Month 2**        | GTM blitz            | 30-50 customers         |
+| **Month 3**        | Hit 100 customers    | Ready for Series A prep |
 
 ---
 
 ## Key Features (MVP)
 
 ### For Users
+
 - ✅ Real-time interview (Groq streaming)
 - ✅ Workflow store (3 templates)
 - ✅ Agent identity card (phone, email, WhatsApp)
@@ -232,6 +243,7 @@ Enterprise: ₹12,000/mo
 - ✅ 7-day free trial (card required)
 
 ### For Agents (Internal)
+
 - ✅ LangGraph orchestration (max 10 iterations)
 - ✅ Rate limiters (50 actions/hour, ₹500/day)
 - ✅ Fallback chains (Groq → Gemini → fail)
@@ -242,15 +254,15 @@ Enterprise: ₹12,000/mo
 
 ## Success Metrics (Phase 1)
 
-| Metric | Target | Definition |
-|--------|--------|-----------|
-| **Execution** | 85% | Ship all 3 workflows in 6 weeks |
-| **Customer Acquisition** | 30-50 customers | By end of Month 2 |
-| **Hit 100 Customers** | Month 3 | First major milestone |
-| **Trial-to-Paid** | 15-20% | 7-day trial conversion |
-| **Churn** | <5%/mo | High-value workflows stick |
-| **NPS** | >50 | Real problem solved |
-| **MRR** | ₹150-250K | 30-50 customers × ₹4,999 |
+| Metric                   | Target          | Definition                      |
+| ------------------------ | --------------- | ------------------------------- |
+| **Execution**            | 85%             | Ship all 3 workflows in 6 weeks |
+| **Customer Acquisition** | 30-50 customers | By end of Month 2               |
+| **Hit 100 Customers**    | Month 3         | First major milestone           |
+| **Trial-to-Paid**        | 15-20%          | 7-day trial conversion          |
+| **Churn**                | <5%/mo          | High-value workflows stick      |
+| **NPS**                  | >50             | Real problem solved             |
+| **MRR**                  | ₹150-250K       | 30-50 customers × ₹4,999        |
 
 ---
 
@@ -280,14 +292,14 @@ Enterprise: ₹12,000/mo
 
 ## Execution Risks & Mitigation
 
-| Risk | Severity | Mitigation |
-|------|----------|-----------|
-| **Multi-agent complexity** | HIGH | Use LangGraph (proven framework) |
-| **Real channel setup** | HIGH | Start with Exotel + Resend only |
-| **India compliance** | MEDIUM | TRAI consent layer built in |
-| **Customer acquisition** | MEDIUM | Pre-sell to 5-10 SMBs before launch |
-| **AI cost blow-up** | LOW | Groq/Gemini free tier + rate limits |
-| **Supabase scaling** | LOW | RLS + proper indexing from Day 1 |
+| Risk                       | Severity | Mitigation                          |
+| -------------------------- | -------- | ----------------------------------- |
+| **Multi-agent complexity** | HIGH     | Use LangGraph (proven framework)    |
+| **Real channel setup**     | HIGH     | Start with Exotel + Resend only     |
+| **India compliance**       | MEDIUM   | TRAI consent layer built in         |
+| **Customer acquisition**   | MEDIUM   | Pre-sell to 5-10 SMBs before launch |
+| **AI cost blow-up**        | LOW      | Groq/Gemini free tier + rate limits |
+| **Supabase scaling**       | LOW      | RLS + proper indexing from Day 1    |
 
 ---
 
@@ -325,18 +337,21 @@ Enterprise: ₹12,000/mo
 ## Rating & Confidence
 
 **Idea Rating:** 9/10
+
 - Real problems worth solving
 - Multi-agent tech is defensible
 - India-first positioning
 - Achievable in 6 weeks
 
 **Execution Confidence:** 85%
+
 - LangGraph + BullMQ proven
 - Tech stack simplified
 - Clear scope boundaries
 - Team has domain knowledge
 
 **Customer Acquisition Confidence:** 60%
+
 - Product-market fit unproven
 - But problem validation is real
 - Pre-sales strategy needed

@@ -11,10 +11,12 @@
 ### **Frontend (18 Pages + Landing)**
 
 ✅ **Public Pages**
+
 - Landing page with Task Assignment workflow showcase
 - Signup/Signin pages (Clerk integration)
 
 ✅ **Dashboard Pages**
+
 - Your Agents (grid with status, usage meters)
 - Agent Detail (identity card with contact info)
 - Agent Store (16 Tier 1 templates + Smart/Quick deploy)
@@ -30,18 +32,21 @@
 - Checkout (payment confirmation)
 
 ✅ **Testing Pages (NEW)**
+
 - Test-Driven Development (test runner dashboard)
 - WebApp Testing (API documentation + examples)
 
 ### **API Endpoints (15 Routes)**
 
 ✅ **Core Flows**
+
 - `POST /api/onboard/deploy` — Create agent with skipPayment
 - `POST /api/onboard/interview` — Real-time streaming interview
 - `POST /api/agents` — Agent CRUD operations
 - `POST /api/agents/[id]/chat` — Chat streaming
 
 ✅ **Payment Processing**
+
 - `POST /api/checkout/stripe` — Stripe session creation (agent-specific)
 - `POST /api/checkout/razorpay` — Razorpay payment links
 - `POST /api/checkout/razorpay/verify` — Razorpay webhook handler
@@ -49,20 +54,24 @@
 - `POST /api/webhooks/razorpay` — Razorpay webhook receiver (payment activation)
 
 ✅ **Notifications (Placeholder)**
+
 - `POST /api/webhooks/exotel` — SMS notifications (placeholder)
 - `POST /api/webhooks/resend` — Email webhooks (placeholder)
 - `POST /api/webhooks/evolution` — WhatsApp messages (placeholder)
 
 ✅ **Workflows**
+
 - `POST /api/workflows/task-assignment` — Execute 5-agent orchestration
 
 ✅ **Testing**
+
 - `POST /api/test-driven-development` — Run test suite
 - `POST /api/webapp-testing/mock-payment` — Simulate payments
 
 ### **Database Schema**
 
 ✅ **Tables with RLS**
+
 - `agents` — AI employee profiles (15+ columns, indexed)
 - `tasks` — Task records from workflows
 - `contacts` — Team member management
@@ -72,6 +81,7 @@
 - `workflow_executions` — Orchestration state tracking
 
 ✅ **Indexes**
+
 - On user_id (isolation)
 - On status, created_at (performance)
 - On agent_id, workflow_id (lookups)
@@ -79,21 +89,25 @@
 ### **Integrations**
 
 ✅ **Authentication**
+
 - Clerk (Google/GitHub OAuth)
 - RLS per user_id
 
 ✅ **AI Models**
+
 - Groq Llama 3.3 (fast, free)
 - Gemini 2.0 Flash (fallback)
 - Claude Opus 4.6 (task orchestration)
 - Real-time SSE streaming
 
 ✅ **Payments**
+
 - Razorpay (INR/UPI) — Full webhook integration
 - Stripe (USD) — Full webhook integration
 - Mock simulator (no real charges)
 
 ✅ **Notifications (Mock)**
+
 - WhatsApp placeholder (queued, tracked)
 - Email placeholder (queued, tracked)
 - SMS placeholder (queued, tracked)
@@ -101,21 +115,25 @@
 ### **Architecture Patterns**
 
 ✅ **LangGraph-style Orchestration**
+
 - 5-agent pipeline (Parser → Router → Notifier → Tracker → Reporter)
 - Sequential execution with state machine
 - Circuit breakers (max 10 iterations)
 
 ✅ **Multi-Tenancy**
+
 - RLS on all tables
 - user_id isolation
 - Service role for admin ops
 
 ✅ **Streaming Response**
+
 - SSE for real-time interview
 - Token-by-token LLM output
 - React state updates on message chunks
 
 ✅ **Webhook Signature Verification**
+
 - HMAC-SHA256 for Razorpay
 - Stripe signature header validation
 - Production-ready security
@@ -125,23 +143,27 @@
 ## Testing Infrastructure
 
 ### **Test-Driven Development Dashboard**
+
 - 6 automated test scenarios
 - Real-time pass/fail feedback
 - Timing metrics
 - Mock payment simulator buttons
 
 ### **WebApp Testing Guide**
+
 - Complete API documentation
 - cURL examples
 - Node.js test code
 - Thunder Client collection export
 
 ### **Thunder Client Collection**
+
 - Pre-configured requests for all payment flows
 - Import directly into Thunder Client extension
 - Test agent creation, webhooks, and mock payments
 
 ### **End-to-End Testing Guide**
+
 - 20-minute walkthrough
 - Sign up → Deploy → Execute → Verify
 - Database verification queries
@@ -152,12 +174,14 @@
 ## Key Features
 
 ### **Smart Deploy Interview** ✅
+
 - Real-time Groq/Gemini streaming
 - 4-6 conversational questions
 - Automatic config extraction
 - Business customization
 
 ### **5-Agent Task Workflow** ✅
+
 - Parser: Extracts tasks from notes
 - Router: Assigns to team members
 - Notifier: Queues WhatsApp messages
@@ -165,12 +189,14 @@
 - Reporter: Generates summary report
 
 ### **Agent Identity Card** ✅
+
 - Phone number, email, WhatsApp contact
 - Active hours, language, personality
 - Usage meters (calls/emails/WhatsApp)
 - Pause/resume controls
 
 ### **Payment Activation Flow** ✅
+
 - Agent created PENDING (skipPayment=true)
 - Payment processors send webhooks
 - Signature verification
@@ -178,12 +204,14 @@
 - Activity logging for audit
 
 ### **Mock Notification System** ✅
+
 - WhatsApp notifications logged
 - Email notifications logged
 - SMS notifications logged
 - Database tracking, no external APIs
 
 ### **Dashboard Navigation** ✅
+
 - Workflows tab added to sidebar
 - Quick access to task assignment
 - Linked to agent execution
@@ -252,6 +280,7 @@ diyaa-ai/
 ## Quick Start for Testing
 
 ### 1. **Start the App**
+
 ```bash
 cd diyaa-ai
 npm install
@@ -259,6 +288,7 @@ npm run dev
 ```
 
 ### 2. **Run End-to-End Flow**
+
 ```
 1. Visit http://localhost:3000
 2. Sign up with test account
@@ -277,6 +307,7 @@ npm run dev
 ```
 
 ### 3. **Test Payment Flows**
+
 ```
 http://localhost:3000/test-driven-development
 - Run All Tests (6 scenarios)
@@ -285,6 +316,7 @@ http://localhost:3000/test-driven-development
 ```
 
 ### 4. **API Documentation**
+
 ```
 http://localhost:3000/webapp-testing
 - cURL examples
@@ -297,30 +329,35 @@ http://localhost:3000/webapp-testing
 ## Production Readiness
 
 ✅ **Security**
+
 - RLS on all tables (user isolation)
 - Webhook signature verification (HMAC-SHA256)
 - Encrypted API key storage (user BYOK)
 - Service role for admin operations
 
 ✅ **Performance**
+
 - Database indexes on critical columns
 - Efficient RLS policies
 - Streaming responses (no page load wait)
 - Optimized queries
 
 ✅ **Reliability**
+
 - Error handling on all endpoints
 - Activity logging (audit trail)
 - Circuit breakers (max iterations)
 - Fallback chains (Groq → Gemini → error)
 
 ✅ **Monitoring**
+
 - Sentry error tracking
 - PostHog product analytics
 - Activity logs in database
 - Webhook verification logs
 
 ✅ **Compliance**
+
 - Supabase Singapore region (DPDPA)
 - TRAI consent layer for messaging
 - Activity audit trail
@@ -330,16 +367,16 @@ http://localhost:3000/webapp-testing
 
 ## Metrics & Success Criteria
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| **Build Completeness** | 100% of MVP scope | ✅ 100% |
-| **Test Coverage** | All critical paths | ✅ 6/6 tests |
-| **Payment Security** | Signature verified | ✅ Full verification |
-| **Database RLS** | All tables isolated | ✅ All tables |
-| **Real-Time Streaming** | < 500ms latency | ✅ <100ms |
-| **Agent Execution** | 5 agents sequential | ✅ Working |
-| **Notifications** | Logged & tracked | ✅ Mock system |
-| **Documentation** | Complete guides | ✅ 3 guides |
+| Metric                  | Target              | Status               |
+| ----------------------- | ------------------- | -------------------- |
+| **Build Completeness**  | 100% of MVP scope   | ✅ 100%              |
+| **Test Coverage**       | All critical paths  | ✅ 6/6 tests         |
+| **Payment Security**    | Signature verified  | ✅ Full verification |
+| **Database RLS**        | All tables isolated | ✅ All tables        |
+| **Real-Time Streaming** | < 500ms latency     | ✅ <100ms            |
+| **Agent Execution**     | 5 agents sequential | ✅ Working           |
+| **Notifications**       | Logged & tracked    | ✅ Mock system       |
+| **Documentation**       | Complete guides     | ✅ 3 guides          |
 
 ---
 
@@ -384,6 +421,7 @@ http://localhost:3000/webapp-testing
 ## Next Steps (Post-Launch)
 
 ### Month 2 (Weeks 7-10)
+
 - ✅ Wire real Exotel SMS
 - ✅ Wire real Resend Email
 - ✅ Add Clinic No-Show workflow
@@ -391,6 +429,7 @@ http://localhost:3000/webapp-testing
 - ✅ Pre-sell to 10-15 SMBs
 
 ### Month 3 (Weeks 11-15)
+
 - ✅ Hit 30-50 paid customers
 - ✅ Activate pgvector RAG
 - ✅ Build skill installer UI
@@ -398,6 +437,7 @@ http://localhost:3000/webapp-testing
 - ✅ Series A prep
 
 ### Months 4-6
+
 - ✅ 100+ customers
 - ✅ 15 workflows live
 - ✅ Evolution API WhatsApp (scale)
@@ -421,6 +461,7 @@ http://localhost:3000/webapp-testing
 ## Final Stats
 
 **Codebase:**
+
 - 18 dashboard pages
 - 15 API routes
 - 1 landing page
@@ -428,12 +469,14 @@ http://localhost:3000/webapp-testing
 - 8 new files (payment + testing)
 
 **Database:**
+
 - 8 tables with RLS
 - 25+ indexes
 - Full audit trail
 - User isolation
 
 **Features:**
+
 - 5-agent orchestration
 - Real-time streaming
 - Payment webhook verification
@@ -441,6 +484,7 @@ http://localhost:3000/webapp-testing
 - Complete testing infrastructure
 
 **Ready for:**
+
 - Day 1 customers
 - Real paying users
 - Scale to 100+ agents
@@ -453,6 +497,7 @@ http://localhost:3000/webapp-testing
 **diyaa.ai MVP is complete and production-ready.**
 
 The platform successfully demonstrates:
+
 - ✅ Multi-agent orchestration (differentiation from competitors)
 - ✅ Business interview customization (not static templates)
 - ✅ Real payment processing (Razorpay + Stripe webhooks)

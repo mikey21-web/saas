@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.agents (
   name TEXT NOT NULL,
   description TEXT,
   template_id TEXT, -- reference to agent store template
+  agent_type TEXT, -- the agent type (leadcatcher, invoicebot, etc.)
   template_version TEXT, -- pinned version
   status TEXT DEFAULT 'active', -- 'active' | 'paused' | 'archived'
 
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.agents (
   monthly_api_requests INTEGER DEFAULT 0,
 
   -- Metadata
+  metadata JSONB, -- additional agent configuration
   deployed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -414,3 +416,30 @@ CREATE INDEX idx_notifications_created_at ON public.notifications(created_at);
 
 -- Vector index for knowledge embeddings (HNSW)
 CREATE INDEX ON public.knowledge_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+-- Agent conversations (for Pixel Office chat history)
+CREATE TABLE IF NOT EXISTS public.agent_conversations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  agent_id UUID NOT NULL REFERENCES public.agents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  messages JSONB DEFAULT '[]',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Agent actions (for tracking agent actions like send_whatsapp, send_email, etc.)
+CREATE TABLE IF NOT EXISTS public.agent_actions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  agent_id UUID NOT NULL REFERENCES public.agents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  action_type TEXT NOT NULL,
+  action_params JSONB,
+  result JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for new tables
+CREATE INDEX idx_agent_conversations_agent_id ON public.agent_conversations(agent_id);
+CREATE INDEX idx_agent_conversations_user_id ON public.agent_conversations(user_id);
+CREATE INDEX idx_agent_actions_agent_id ON public.agent_actions(agent_id);
+CREATE INDEX idx_agent_actions_user_id ON public.agent_actions(user_id);
+CREATE INDEX idx_agent_actions_type ON public.agent_actions(action_type);

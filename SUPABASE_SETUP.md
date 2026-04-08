@@ -153,19 +153,23 @@ Supabase automatically backs up free tier daily. For production:
 ## Troubleshooting
 
 ### "Auth session missing"
+
 - Make sure Clerk is configured and user is signed in
 - Check `middleware.ts` is protecting `/api/*` routes
 
 ### "RLS policy violation"
+
 - User ID mismatch between Clerk and Supabase
 - Check that `user_id` column matches `auth.uid()`
 
 ### "No rows found" on single()
+
 - Query returned 0 rows but expected 1
 - Use `.single()` only when you know 1 row exists
 - Otherwise use `.select()` and check for empty array
 
 ### Migrations failed
+
 - Copy migration line-by-line if full query fails
 - Check SQL syntax in error message
 - Some Postgres extensions (vector) may need enabling first

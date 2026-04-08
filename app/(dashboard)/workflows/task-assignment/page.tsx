@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { authFetch } from '@/lib/auth/client'
 
 interface Task {
   title: string
@@ -59,7 +60,7 @@ export default function TaskAssignmentPage() {
         throw new Error('Please provide at least one team member')
       }
 
-      const response = await fetch('/api/workflows/task-assignment', {
+      const response = await authFetch('/api/workflows/task-assignment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -158,7 +159,9 @@ export default function TaskAssignmentPage() {
         {/* Tasks Extracted */}
         {result.output.tasksExtracted.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="font-bold text-gray-900 mb-4">📋 Tasks Extracted ({result.output.tasksExtracted.length})</h3>
+            <h3 className="font-bold text-gray-900 mb-4">
+              📋 Tasks Extracted ({result.output.tasksExtracted.length})
+            </h3>
             <div className="space-y-3">
               {result.output.tasksExtracted.map((task, i) => (
                 <div key={i} className="bg-blue-50 border border-blue-100 rounded-lg p-4">
@@ -188,7 +191,9 @@ export default function TaskAssignmentPage() {
         {/* Assignments */}
         {result.output.taskAssignments.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="font-bold text-gray-900 mb-4">👥 Task Assignments ({result.output.taskAssignments.length})</h3>
+            <h3 className="font-bold text-gray-900 mb-4">
+              👥 Task Assignments ({result.output.taskAssignments.length})
+            </h3>
             <div className="space-y-3">
               {result.output.taskAssignments.map((assignment, i) => (
                 <div key={i} className="bg-purple-50 border border-purple-100 rounded-lg p-4">
@@ -284,7 +289,10 @@ export default function TaskAssignmentPage() {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Don't have one? <Link href="/store" className="text-blue-600 hover:underline">Deploy Task Assignment from store</Link>
+            Don't have one?{' '}
+            <Link href="/store" className="text-blue-600 hover:underline">
+              Deploy Task Assignment from store
+            </Link>
           </p>
         </div>
 

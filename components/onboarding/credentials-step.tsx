@@ -8,7 +8,7 @@ import {
   validateOpenAIKey,
   validateGroqKey,
   type CredentialValidation,
-} from '@/lib/credentials/vault'
+} from '@/lib/credentials/validators'
 
 interface CredentialsStepProps {
   onCredentialsSubmit: (creds: {
@@ -21,7 +21,10 @@ interface CredentialsStepProps {
   isLoading?: boolean
 }
 
-export default function CredentialsStep({ onCredentialsSubmit, isLoading = false }: CredentialsStepProps) {
+export default function CredentialsStep({
+  onCredentialsSubmit,
+  isLoading = false,
+}: CredentialsStepProps) {
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
@@ -36,28 +39,28 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
   const handleWhatsappChange = (value: string) => {
     setWhatsappNumber(value)
     const validation = validateWhatsAppNumber(value)
-    setValidations(prev => ({ ...prev, whatsapp_number: validation }))
+    setValidations((prev) => ({ ...prev, whatsapp_number: validation }))
   }
 
   const handleWebsiteChange = async (value: string) => {
     setWebsiteUrl(value)
-    setValidating(prev => ({ ...prev, website_url: true }))
+    setValidating((prev) => ({ ...prev, website_url: true }))
 
     const validation = await validateWebsiteUrl(value)
-    setValidations(prev => ({ ...prev, website_url: validation }))
-    setValidating(prev => ({ ...prev, website_url: false }))
+    setValidations((prev) => ({ ...prev, website_url: validation }))
+    setValidating((prev) => ({ ...prev, website_url: false }))
   }
 
   const handleOpenaiChange = (value: string) => {
     setOpenaiKey(value)
     const validation = validateOpenAIKey(value)
-    setValidations(prev => ({ ...prev, openai_api_key: validation }))
+    setValidations((prev) => ({ ...prev, openai_api_key: validation }))
   }
 
   const handleGroqChange = (value: string) => {
     setGroqKey(value)
     const validation = validateGroqKey(value)
-    setValidations(prev => ({ ...prev, groq_api_key: validation }))
+    setValidations((prev) => ({ ...prev, groq_api_key: validation }))
   }
 
   const handleSubmit = async () => {
@@ -87,13 +90,15 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
       <div className="space-y-3">
         <label className="block" style={{ color: '#f0eff0' }}>
           <span className="font-medium text-sm mb-2 block">WhatsApp Business Number</span>
-          <span className="text-xs" style={{ color: '#71717a' }}>Your agent will send messages from this number</span>
+          <span className="text-xs" style={{ color: '#71717a' }}>
+            Your agent will send messages from this number
+          </span>
         </label>
         <div className="relative">
           <input
             type="tel"
             value={whatsappNumber}
-            onChange={e => handleWhatsappChange(e.target.value)}
+            onChange={(e) => handleWhatsappChange(e.target.value)}
             placeholder="+919876543210"
             className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none"
             style={{
@@ -105,6 +110,8 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
                     : 'rgba(255,255,255,0.1)',
               background: 'rgba(255,255,255,0.05)',
               color: '#f0eff0',
+              pointerEvents: 'auto',
+              cursor: 'text',
             }}
           />
           {validations.whatsapp_number?.valid && (
@@ -118,7 +125,9 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
           <div
             className="text-xs p-2 rounded"
             style={{
-              background: validations.whatsapp_number.valid ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+              background: validations.whatsapp_number.valid
+                ? 'rgba(16,185,129,0.1)'
+                : 'rgba(239,68,68,0.1)',
               color: validations.whatsapp_number.valid ? '#10b981' : '#ef4444',
             }}
           >
@@ -131,13 +140,15 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
       <div className="space-y-3">
         <label className="block" style={{ color: '#f0eff0' }}>
           <span className="font-medium text-sm mb-2 block">Your Website URL</span>
-          <span className="text-xs" style={{ color: '#71717a' }}>Your agent will search this site for customer questions</span>
+          <span className="text-xs" style={{ color: '#71717a' }}>
+            Your agent will search this site for customer questions
+          </span>
         </label>
         <div className="relative">
           <input
             type="url"
             value={websiteUrl}
-            onChange={e => handleWebsiteChange(e.target.value)}
+            onChange={(e) => handleWebsiteChange(e.target.value)}
             placeholder="https://www.example.com"
             className="w-full px-4 py-3 rounded-lg border transition-all focus:outline-none"
             style={{
@@ -149,10 +160,15 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
                     : 'rgba(255,255,255,0.1)',
               background: 'rgba(255,255,255,0.05)',
               color: '#f0eff0',
+              pointerEvents: 'auto',
+              cursor: 'text',
             }}
           />
           {validating.website_url && (
-            <Loader2 className="absolute right-3 top-3 w-5 h-5 animate-spin" style={{ color: '#e879f9' }} />
+            <Loader2
+              className="absolute right-3 top-3 w-5 h-5 animate-spin"
+              style={{ color: '#e879f9' }}
+            />
           )}
           {validations.website_url?.valid && !validating.website_url && (
             <CheckCircle2 className="absolute right-3 top-3 w-5 h-5" style={{ color: '#10b981' }} />
@@ -165,7 +181,9 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
           <div
             className="text-xs p-2 rounded"
             style={{
-              background: validations.website_url.valid ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+              background: validations.website_url.valid
+                ? 'rgba(16,185,129,0.1)'
+                : 'rgba(239,68,68,0.1)',
               color: validations.website_url.valid ? '#10b981' : '#ef4444',
             }}
           >
@@ -178,7 +196,9 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
       <div className="space-y-3">
         <label className="block" style={{ color: '#f0eff0' }}>
           <span className="font-medium text-sm mb-4 block">AI Model (What powers your agent)</span>
-          <span className="text-xs" style={{ color: '#71717a' }}>Choose your AI model for responding to customers</span>
+          <span className="text-xs" style={{ color: '#71717a' }}>
+            Choose your AI model for responding to customers
+          </span>
         </label>
 
         {/* Option 1: diyaa.ai Powered */}
@@ -195,7 +215,13 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
           }}
         >
           <div className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded border mt-1" style={{ borderColor: '#e879f9', background: useDiyaaAIPowered ? '#e879f9' : 'transparent' }} />
+            <div
+              className="w-5 h-5 rounded border mt-1"
+              style={{
+                borderColor: '#e879f9',
+                background: useDiyaaAIPowered ? '#e879f9' : 'transparent',
+              }}
+            />
             <div className="flex-1">
               <p className="font-semibold" style={{ color: '#f0eff0' }}>
                 diyaa.ai Powered (Recommended)
@@ -222,7 +248,7 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
               <input
                 type={showKeys.openai ? 'text' : 'password'}
                 value={openaiKey}
-                onChange={e => handleOpenaiChange(e.target.value)}
+                onChange={(e) => handleOpenaiChange(e.target.value)}
                 placeholder="sk-..."
                 disabled={useDiyaaAIPowered}
                 className="w-full px-4 py-2 rounded-lg border text-sm transition-all focus:outline-none disabled:opacity-50"
@@ -238,7 +264,7 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
                 }}
               />
               <button
-                onClick={() => setShowKeys(prev => ({ ...prev, openai: !prev.openai }))}
+                onClick={() => setShowKeys((prev) => ({ ...prev, openai: !prev.openai }))}
                 className="absolute right-3 top-2.5"
                 style={{ color: '#71717a' }}
               >
@@ -246,7 +272,10 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
               </button>
             </div>
             {validations.openai_api_key && (
-              <div className="text-xs" style={{ color: validations.openai_api_key.valid ? '#10b981' : '#ef4444' }}>
+              <div
+                className="text-xs"
+                style={{ color: validations.openai_api_key.valid ? '#10b981' : '#ef4444' }}
+              >
                 {validations.openai_api_key.message}
               </div>
             )}
@@ -261,7 +290,7 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
               <input
                 type={showKeys.groq ? 'text' : 'password'}
                 value={groqKey}
-                onChange={e => handleGroqChange(e.target.value)}
+                onChange={(e) => handleGroqChange(e.target.value)}
                 placeholder="gsk_..."
                 disabled={useDiyaaAIPowered}
                 className="w-full px-4 py-2 rounded-lg border text-sm transition-all focus:outline-none disabled:opacity-50"
@@ -277,7 +306,7 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
                 }}
               />
               <button
-                onClick={() => setShowKeys(prev => ({ ...prev, groq: !prev.groq }))}
+                onClick={() => setShowKeys((prev) => ({ ...prev, groq: !prev.groq }))}
                 className="absolute right-3 top-2.5"
                 style={{ color: '#71717a' }}
               >
@@ -285,7 +314,10 @@ export default function CredentialsStep({ onCredentialsSubmit, isLoading = false
               </button>
             </div>
             {validations.groq_api_key && (
-              <div className="text-xs" style={{ color: validations.groq_api_key.valid ? '#10b981' : '#ef4444' }}>
+              <div
+                className="text-xs"
+                style={{ color: validations.groq_api_key.valid ? '#10b981' : '#ef4444' }}
+              >
                 {validations.groq_api_key.message}
               </div>
             )}

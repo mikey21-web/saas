@@ -12,12 +12,14 @@ The credentials collection, encryption, and deployment system is now **fully int
 ## Architecture
 
 ### 1. Encryption Layer (`lib/credentials/vault.ts`)
+
 - **Algorithm:** AES-256-GCM (authenticated encryption)
 - **Key Storage:** `ENCRYPTION_KEY` environment variable (32+ chars)
 - **Output Format:** `iv.encryptedData.authTag` (base64-encoded)
 - **Validators:** WhatsApp (+91...), Website URL (accessibility test), OpenAI (sk-...), Groq (gsk-...)
 
 ### 2. Database Layer (`lib/supabase/credentials.ts`)
+
 - **Table:** `agent_credentials` (RLS enabled, user_id isolation)
 - **Functions:**
   - `saveAgentCredentials()` - store encrypted creds
@@ -28,6 +30,7 @@ The credentials collection, encryption, and deployment system is now **fully int
   - `deleteAgentCredentials()` - secure deletion
 
 ### 3. UI Component (`components/onboarding/credentials-step.tsx`)
+
 - **Fields:**
   - WhatsApp Business Number: `+91...` format validation
   - Website URL: HEAD request accessibility check
@@ -39,7 +42,9 @@ The credentials collection, encryption, and deployment system is now **fully int
 - **Styling:** Dark theme, #e879f9 magenta accents, rgba borders
 
 ### 4. Onboarding Flow (`app/(dashboard)/onboard/[agentId]/page.tsx`)
+
 Multi-step wizard with progress indicator:
+
 1. **Smart Interview** - Conversational AI extracts business config
 2. **Knowledge Base** - Upload docs or paste FAQs (optional)
 3. **Personality** - Tone, active hours, language selection
@@ -47,6 +52,7 @@ Multi-step wizard with progress indicator:
 5. **Review & Deploy** - Summary card + free trial/paid deploy buttons
 
 ### 5. Deployment (`app/api/onboard/deploy/route.ts`)
+
 ```typescript
 POST /api/onboard/deploy
 Body: {
@@ -62,12 +68,14 @@ Body: {
 ```
 
 Flow:
+
 1. Create agent in `agents` table
 2. Save credentials to `agent_credentials` table (encrypted)
 3. Log activity with `hasCredentials: true`
 4. Return agentId for payment/redirect
 
 ### 6. Template Definitions (`lib/agents/template-definitions.ts`)
+
 Each of 16 agents specifies exact credential requirements:
 
 ```typescript
@@ -102,24 +110,24 @@ interface AgentTemplate {
 
 ## Agent Template Credentials Map
 
-| Agent | WhatsApp | Website | AI Model | Notes |
-|-------|----------|---------|----------|-------|
-| LeadCatcher | ✅ Req | ❌ No | ✅ Req | Sales, WhatsApp-first |
-| AppointBot | ✅ Req | ⚠️ Opt | ✅ Req | Scheduling, booking context optional |
-| PayChaser | ✅ Req | ❌ No | ✅ Req | Collections, payment focus |
-| GSTMate | ❌ No | ❌ No | ✅ Req | Accounting, no external deps |
-| CustomerSupport | ✅ Req | ✅ Req | ✅ Req | Support, need knowledge base |
-| ReviewGuard | ❌ No | ✅ Req | ✅ Req | Reputation, website context only |
-| InvoiceBot | ❌ No | ❌ No | ✅ Req | Accounting, pure AI |
-| WhatsBlast | ✅ Req | ❌ No | ❌ No | Marketing, broadcast only |
-| DocHarvest | ✅ Req | ❌ No | ✅ Req | Operations, document collection |
-| NurtureBot | ✅ Req | ❌ No | ✅ Req | Sales, drip sequences |
-| StockSentinel | ✅ Req | ❌ No | ✅ Req | Inventory tracking |
-| PatientPulse | ✅ Req | ❌ No | ✅ Req | Healthcare, reminders |
-| ResumeFilter | ❌ No | ❌ No | ✅ Req | HR, pure screening AI |
-| SocialSched | ❌ No | ❌ No | ✅ Req | Marketing, content AI |
-| FeeCollect | ✅ Req | ❌ No | ✅ Req | Education, reminders |
-| TaskMaster | ✅ Req | ❌ No | ✅ Req | Operations, notifications |
+| Agent           | WhatsApp | Website | AI Model | Notes                                |
+| --------------- | -------- | ------- | -------- | ------------------------------------ |
+| LeadCatcher     | ✅ Req   | ❌ No   | ✅ Req   | Sales, WhatsApp-first                |
+| AppointBot      | ✅ Req   | ⚠️ Opt  | ✅ Req   | Scheduling, booking context optional |
+| PayChaser       | ✅ Req   | ❌ No   | ✅ Req   | Collections, payment focus           |
+| GSTMate         | ❌ No    | ❌ No   | ✅ Req   | Accounting, no external deps         |
+| CustomerSupport | ✅ Req   | ✅ Req  | ✅ Req   | Support, need knowledge base         |
+| ReviewGuard     | ❌ No    | ✅ Req  | ✅ Req   | Reputation, website context only     |
+| InvoiceBot      | ❌ No    | ❌ No   | ✅ Req   | Accounting, pure AI                  |
+| WhatsBlast      | ✅ Req   | ❌ No   | ❌ No    | Marketing, broadcast only            |
+| DocHarvest      | ✅ Req   | ❌ No   | ✅ Req   | Operations, document collection      |
+| NurtureBot      | ✅ Req   | ❌ No   | ✅ Req   | Sales, drip sequences                |
+| StockSentinel   | ✅ Req   | ❌ No   | ✅ Req   | Inventory tracking                   |
+| PatientPulse    | ✅ Req   | ❌ No   | ✅ Req   | Healthcare, reminders                |
+| ResumeFilter    | ❌ No    | ❌ No   | ✅ Req   | HR, pure screening AI                |
+| SocialSched     | ❌ No    | ❌ No   | ✅ Req   | Marketing, content AI                |
+| FeeCollect      | ✅ Req   | ❌ No   | ✅ Req   | Education, reminders                 |
+| TaskMaster      | ✅ Req   | ❌ No   | ✅ Req   | Operations, notifications            |
 
 ---
 
@@ -215,28 +223,33 @@ interface AgentTemplate {
 ## Security Guarantees
 
 ### 1. Encryption at Rest
+
 - All API keys stored as `iv.encryptedData.authTag`
 - Even database admin cannot read plaintext keys
 - AES-256-GCM provides authenticated encryption (prevents tampering)
 
 ### 2. Row-Level Security
+
 - `agent_credentials` table has RLS enabled
 - Policy: `auth.uid() = user_id`
 - Supabase enforces user isolation at database level
 - `supabaseAdmin` (service role) only used in API routes, never in client code
 
 ### 3. Webhook Verification
+
 - WhatsApp webhooks verified with HMAC-SHA256
 - Token stored encrypted in `agent_credentials.auth_token`
 - `getCredentialsByAuthToken()` retrieves & decrypts stored token
 - Compares with `crypto.timingSafeEqual()` to prevent timing attacks
 
 ### 4. Environment Variables
+
 - `ENCRYPTION_KEY` must be 32+ characters (256 bits)
 - Thrown error at startup if missing/too short
 - Never logged or exposed in error messages
 
 ### 5. Sanitization
+
 - `sanitizeCredentials()` replaces keys with `●●●●●●●●●`
 - API responses never contain plaintext keys
 - Safe to return credential summary in logs/analytics
@@ -246,18 +259,21 @@ interface AgentTemplate {
 ## Testing Checklist
 
 ### Unit Tests
+
 - [ ] `encryptCredential()` / `decryptCredential()` round-trip
 - [ ] Validators: WhatsApp number, website URL, API key formats
 - [ ] `getCredentialsByAuthToken()` returns null for bad token
 - [ ] `sanitizeCredentials()` hides all sensitive fields
 
 ### Integration Tests
+
 - [ ] Create agent → credentials saved to DB
 - [ ] Retrieve agent credentials → decrypted correctly
 - [ ] RLS policy blocks cross-user access
 - [ ] WhatsApp webhook verification passes with correct token
 
 ### End-to-End Tests
+
 - [ ] Deploy LeadCatcher → credentials encrypted & saved
 - [ ] Deploy CustomerSupport → website URL validated
 - [ ] Agent receives message via webhook → token verified
@@ -268,9 +284,11 @@ interface AgentTemplate {
 ## API Endpoints (New/Modified)
 
 ### POST `/api/onboard/deploy`
+
 Deploy agent with credentials. Credentials are encrypted before storage.
 
 **Request:**
+
 ```typescript
 {
   agentType: string
@@ -285,6 +303,7 @@ Deploy agent with credentials. Credentials are encrypted before storage.
 ```
 
 **Response:**
+
 ```typescript
 {
   success: boolean
@@ -338,17 +357,17 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=...
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `lib/credentials/vault.ts` | ✅ Complete (existing) |
-| `lib/supabase/credentials.ts` | ✅ Complete (existing) |
-| `components/onboarding/credentials-step.tsx` | ✅ Complete (existing) |
-| `lib/workflows/deployer.ts` | ✅ Complete (existing) |
-| `app/api/webhooks/whatsapp/[agentId]/route.ts` | ✅ Complete (existing) |
-| `app/api/onboard/deploy/route.ts` | ✅ Updated to accept credentials |
-| `app/(dashboard)/onboard/[agentId]/page.tsx` | ✅ Refactored to multi-step with credentials |
-| `lib/agents/template-definitions.ts` | ✅ NEW - template credential system |
-| `app/(dashboard)/store/page.tsx` | ✅ Updated to use template definitions |
+| File                                           | Changes                                      |
+| ---------------------------------------------- | -------------------------------------------- |
+| `lib/credentials/vault.ts`                     | ✅ Complete (existing)                       |
+| `lib/supabase/credentials.ts`                  | ✅ Complete (existing)                       |
+| `components/onboarding/credentials-step.tsx`   | ✅ Complete (existing)                       |
+| `lib/workflows/deployer.ts`                    | ✅ Complete (existing)                       |
+| `app/api/webhooks/whatsapp/[agentId]/route.ts` | ✅ Complete (existing)                       |
+| `app/api/onboard/deploy/route.ts`              | ✅ Updated to accept credentials             |
+| `app/(dashboard)/onboard/[agentId]/page.tsx`   | ✅ Refactored to multi-step with credentials |
+| `lib/agents/template-definitions.ts`           | ✅ NEW - template credential system          |
+| `app/(dashboard)/store/page.tsx`               | ✅ Updated to use template definitions       |
 
 ---
 
@@ -365,6 +384,7 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=...
 **Before:** Each agent had hardcoded configuration, no credential collection, static deployment.
 
 **After:** Every agent in the store follows the same production-grade credential collection + encryption pattern.
+
 - 1-click deploy for non-technical users
 - WhatsApp number + website URL + AI model choice = 3 fields
 - All credentials encrypted at rest with AES-256-GCM

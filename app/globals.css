@@ -17,7 +17,11 @@
   body {
     @apply bg-[#0A0A0B] text-white font-sans antialiased;
     /* Basic star/particle backdrop using a subtle radial gradient */
-    background-image: radial-gradient(circle at 50% 0%, rgba(46, 16, 101, 0.4) 0%, rgba(10, 10, 11, 1) 50%);
+    background-image: radial-gradient(
+      circle at 50% 0%,
+      rgba(46, 16, 101, 0.4) 0%,
+      rgba(10, 10, 11, 1) 50%
+    );
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
@@ -34,7 +38,7 @@
   .text-gradient-magenta {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500;
   }
-  
+
   .glass-card {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
   }
@@ -42,7 +46,7 @@
   .glow-magenta {
     @apply shadow-[0_0_20px_0_rgba(236,72,153,0.5)];
   }
-  
+
   .glow-magenta-lg {
     @apply shadow-[0_0_40px_0_rgba(236,72,153,0.6)];
   }

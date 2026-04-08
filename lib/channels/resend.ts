@@ -30,11 +30,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
     })
 
     if (!res.ok) {
-      const err = await res.json() as { message?: string }
+      const err = (await res.json()) as { message?: string }
       return { success: false, error: err.message ?? 'Resend API error' }
     }
 
-    const data = await res.json() as { id: string }
+    const data = (await res.json()) as { id: string }
     return { success: true, messageId: data.id }
   } catch (e: unknown) {
     return { success: false, error: (e as Error).message }

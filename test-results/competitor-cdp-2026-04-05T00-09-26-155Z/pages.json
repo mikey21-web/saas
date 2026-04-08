@@ -1,0 +1,56 @@
+[
+  {
+    "url": "chrome-error://chromewebdata/",
+    "title": "dashboard.actionagents.io%20",
+    "headings": [
+      "This site can’t be reached"
+    ],
+    "descriptions": [
+      "Check if there is a typo in dashboard.actionagents.io%20."
+    ],
+    "buttons": [
+      "Reload"
+    ],
+    "links": [
+      "javascript:diagnoseErrors()"
+    ],
+    "forms": 0,
+    "inputs": 0,
+    "navItems": [],
+    "sectionsCount": 0,
+    "colors": {
+      "bodyBg": "rgb(255, 255, 255)",
+      "bodyText": "rgb(95, 99, 104)",
+      "mainBg": "rgb(255, 255, 255)",
+      "mainText": "rgb(95, 99, 104)"
+    },
+    "authHints": []
+  },
+  {
+    "url": "chrome-error://chromewebdata/",
+    "title": "dashboard.actionagents.io%20",
+    "headings": [
+      "This site can’t be reached"
+    ],
+    "descriptions": [
+      "Check if there is a typo in dashboard.actionagents.io%20."
+    ],
+    "buttons": [
+      "Reload"
+    ],
+    "links": [
+      "javascript:diagnoseErrors()"
+    ],
+    "forms": 0,
+    "inputs": 0,
+    "navItems": [],
+    "sectionsCount": 0,
+    "colors": {
+      "bodyBg": "rgb(255, 255, 255)",
+      "bodyText": "rgb(95, 99, 104)",
+      "mainBg": "rgb(255, 255, 255)",
+      "mainText": "rgb(95, 99, 104)"
+    },
+    "authHints": []
+  }
+]

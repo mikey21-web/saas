@@ -11,7 +11,9 @@ const headers = { apikey: API_KEY, 'Content-Type': 'application/json' }
 
 // ─── Instance Management ──────────────────────────────────────────────────────
 
-export async function createInstance(agentId: string): Promise<{ success: boolean; qrCode?: string; error?: string }> {
+export async function createInstance(
+  agentId: string
+): Promise<{ success: boolean; qrCode?: string; error?: string }> {
   try {
     const res = await fetch(`${BASE}/instance/create`, {
       method: 'POST',
@@ -22,7 +24,7 @@ export async function createInstance(agentId: string): Promise<{ success: boolea
         integration: 'WHATSAPP-BAILEYS',
       }),
     })
-    const data = await res.json() as { qrcode?: { base64?: string }; error?: string }
+    const data = (await res.json()) as { qrcode?: { base64?: string }; error?: string }
     if (!res.ok) return { success: false, error: data.error ?? 'Failed to create instance' }
     return { success: true, qrCode: data.qrcode?.base64 }
   } catch (e: unknown) {
@@ -30,10 +32,12 @@ export async function createInstance(agentId: string): Promise<{ success: boolea
   }
 }
 
-export async function getQRCode(agentId: string): Promise<{ success: boolean; qrCode?: string; error?: string }> {
+export async function getQRCode(
+  agentId: string
+): Promise<{ success: boolean; qrCode?: string; error?: string }> {
   try {
     const res = await fetch(`${BASE}/instance/connect/${agentId}`, { headers })
-    const data = await res.json() as { base64?: string; error?: string }
+    const data = (await res.json()) as { base64?: string; error?: string }
     if (!res.ok) return { success: false, error: data.error ?? 'Failed to get QR' }
     return { success: true, qrCode: data.base64 }
   } catch (e: unknown) {
@@ -41,10 +45,12 @@ export async function getQRCode(agentId: string): Promise<{ success: boolean; qr
   }
 }
 
-export async function getInstanceStatus(agentId: string): Promise<'connected' | 'disconnected' | 'pending'> {
+export async function getInstanceStatus(
+  agentId: string
+): Promise<'connected' | 'disconnected' | 'pending'> {
   try {
     const res = await fetch(`${BASE}/instance/fetchInstances?instanceName=${agentId}`, { headers })
-    const data = await res.json() as Array<{ instance?: { state?: string } }>
+    const data = (await res.json()) as Array<{ instance?: { state?: string } }>
     const state = data[0]?.instance?.state
     if (state === 'open') return 'connected'
     if (state === 'close') return 'disconnected'
@@ -67,7 +73,7 @@ export async function sendText(
       headers,
       body: JSON.stringify({ number: to, text: message }),
     })
-    const data = await res.json() as { key?: { id?: string }; error?: string }
+    const data = (await res.json()) as { key?: { id?: string }; error?: string }
     if (!res.ok) return { success: false, error: data.error ?? 'Failed to send message' }
     return { success: true, messageId: data.key?.id }
   } catch (e: unknown) {

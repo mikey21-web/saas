@@ -58,23 +58,21 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     .map((s) => `- **${s.name}** (${s.id}): ${s.description}`)
     .join('\n')
 
-  const productList = agentConfig.products.length > 0
-    ? agentConfig.products.map((p) => `- ${p}`).join('\n')
-    : 'No specific products configured.'
+  const productList =
+    agentConfig.products.length > 0
+      ? agentConfig.products.map((p) => `- ${p}`).join('\n')
+      : 'No specific products configured.'
 
-  const ragSection = ragContext
-    ? `\n## Relevant Business Knowledge\n${ragContext}\n`
-    : ''
+  const ragSection = ragContext ? `\n## Relevant Business Knowledge\n${ragContext}\n` : ''
 
-  const customerSection = customerName
-    ? `\nYou are currently talking to: **${customerName}**`
-    : ''
+  const customerSection = customerName ? `\nYou are currently talking to: **${customerName}**` : ''
 
   const channelGuidelines = getChannelGuidelines(currentChannel)
 
-  const languageNote = agentConfig.language && agentConfig.language !== 'en'
-    ? `\nPreferred language: ${agentConfig.language}. Respond in this language when the customer uses it.`
-    : '\nRespond in the same language the customer uses. Default to English.'
+  const languageNote =
+    agentConfig.language && agentConfig.language !== 'en'
+      ? `\nPreferred language: ${agentConfig.language}. Respond in this language when the customer uses it.`
+      : '\nRespond in the same language the customer uses. Default to English.'
 
   const maxLenNote = agentConfig.maxResponseLength
     ? `\nKeep responses under ${agentConfig.maxResponseLength} characters.`
@@ -182,9 +180,12 @@ export function buildToolDefinitions(
     function: {
       name: skill.id,
       description: skill.description,
-      parameters: (skill.inputSchema && typeof skill.inputSchema === 'object' && 'shape' in (skill.inputSchema as Record<string, unknown>))
-        ? zodToJsonSchema(skill.inputSchema)
-        : (skill.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
+      parameters:
+        skill.inputSchema &&
+        typeof skill.inputSchema === 'object' &&
+        'shape' in (skill.inputSchema as Record<string, unknown>)
+          ? zodToJsonSchema(skill.inputSchema)
+          : ((skill.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} }),
     },
   }))
 }
@@ -199,12 +200,17 @@ function zodToJsonSchema(schema: unknown): Record<string, unknown> {
   if (schema && typeof schema === 'object' && '_def' in (schema as Record<string, unknown>)) {
     const def = (schema as Record<string, unknown>)._def as Record<string, unknown>
     if (def.typeName === 'ZodObject' && def.shape) {
-      const shape = typeof def.shape === 'function' ? (def.shape as () => Record<string, unknown>)() : def.shape as Record<string, unknown>
+      const shape =
+        typeof def.shape === 'function'
+          ? (def.shape as () => Record<string, unknown>)()
+          : (def.shape as Record<string, unknown>)
       const properties: Record<string, unknown> = {}
       const required: string[] = []
 
       for (const [key, value] of Object.entries(shape)) {
-        const fieldDef = (value as Record<string, unknown>)?._def as Record<string, unknown> | undefined
+        const fieldDef = (value as Record<string, unknown>)?._def as
+          | Record<string, unknown>
+          | undefined
         if (fieldDef) {
           const isOptional = fieldDef.typeName === 'ZodOptional'
           if (!isOptional) {

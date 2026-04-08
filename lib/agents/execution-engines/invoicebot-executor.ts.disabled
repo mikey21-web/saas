@@ -1,0 +1,277 @@
+/**
+ * InvoiceBot Execution Engine — No n8n Required
+ *
+ * Full flow in pure code:
+ * 1. LLM parses natural language → structured invoice data
+ * 2. Razorpay API → creates payment link
+ * 3. pdf-lib → generates GST invoice PDF
+ * 4. Evolution API → sends invoice + link via WhatsApp
+ * 5. Google Sheets → logs the transaction
+ */
+
+import { callAI } from '@/lib/ai/router'
+import { createRazorpayPaymentLink } from './modules/razorpay'
+import { generateInvoicePDF } from './modules/invoice-pdf'
+import { sendInvoiceViaWhatsApp } from './modules/whatsapp-sender'
+import { logInvoiceToSheets } from './modules/sheets-logger'
+
+export interface InvoiceRequest {
+  clientName: string
+  clientPhone?: string
+  clientEmail?: string
+  amount: number
+  description: string
+  gstRate: number
+  businessName: string
+  businessGSTIN?: string
+  dueDate?: string
+}
+
+export interface InvoiceBotContext {
+  businessName: string
+  businessGSTIN?: string
+  businessAddress?: string
+  tone: string
+  evolutionInstanceName?: string
+}
+
+/**
+ * Generate a sequential invoice number
+ * Format: INV-YYYYMM-NNN
+ */
+function generateInvoiceNumber(): string {
+  const now = new Date()
+  const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
+  const seq = String(Math.floor(Math.random() * 900) + 100) // 3-digit random suffix
+  return `INV-${yyyymm}-${seq}`
+}
+
+/**
+ * Parse user message to extract invoice details using LLM
+ */
+export async function parseInvoiceRequest(
+  userMessage: string,
+  ctx: Pick<InvoiceBotContext, 'businessName' | 'businessGSTIN' | 'tone'>
+): Promise<InvoiceRequest | null> {
+  const systemPrompt = `You are an invoice parsing expert. Extract invoice details from the user message.
+
+Your task: Parse the user's message and extract:
+- clientName: Who is being invoiced?
+- clientPhone: Their phone number with country code (if provided, otherwise null)
+- clientEmail: Their email (if provided, otherwise null)
+- amount: Invoice amount in rupees (numeric only, no symbols)
+- description: What is being invoiced for?
+- gstRate: GST percentage — one of: 0, 5, 12, 18, 28 (default 18 if not mentioned)
+- dueDate: When is payment due? (YYYY-MM-DD format, default 30 days from today if not specified)
+
+Return ONLY valid JSON with these fields. Use null for missing optional fields.
+Today's date: ${new Date().toISOString().split('T')[0]}
+Business: "${ctx.businessName}" | GSTIN: "${ctx.businessGSTIN || 'Unregistered'}"
+
+Example output:
+{
+  "clientName": "Mehta Enterprises",
+  "clientPhone": "+919876543210",
+  "clientEmail": null,
+  "amount": 45000,
+  "description": "Web Design Services",
+  "gstRate": 18,
+  "dueDate": "2026-05-01"
+}`
+
+  try {
+    const result = await callAI({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.2,
+      maxTokens: 400,
+    })
+
+    const jsonMatch = result.content?.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return null
+
+    const parsed = JSON.parse(jsonMatch[0]) as Partial<InvoiceRequest>
+
+    if (!parsed.clientName || !parsed.amount || !parsed.description) return null
+
+    return {
+      clientName: parsed.clientName,
+      clientPhone: parsed.clientPhone || undefined,
+      clientEmail: parsed.clientEmail || undefined,
+      amount: Number(parsed.amount),
+      description: parsed.description,
+      gstRate: parsed.gstRate ?? 18,
+      businessName: ctx.businessName,
+      businessGSTIN: ctx.businessGSTIN,
+      dueDate:
+        parsed.dueDate ||
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Main InvoiceBot executor — runs the full invoice creation flow
+ */
+export async function executeInvoiceBot(
+  userMessage: string,
+  ctx: InvoiceBotContext
+): Promise<{ success: boolean; message: string; data?: Record<string, unknown> }> {
+  // Step 1: Parse the invoice request
+  const invoice = await parseInvoiceRequest(userMessage, ctx)
+
+  if (!invoice) {
+    return {
+      success: true,
+      message: [
+        "I'll help you create an invoice! Just tell me:",
+        '',
+        '• *Client name*',
+        '• *Amount* (in ₹)',
+        "• *What you're invoicing for*",
+        '• GST rate (optional, default 18%)',
+        '• Client phone number (optional, for WhatsApp delivery)',
+        '',
+        'Example: _"Invoice Mehta ₹45,000 for web design, GST 18%, phone +919876543210"_',
+      ].join('\n'),
+    }
+  }
+
+  const invoiceNumber = generateInvoiceNumber()
+  const invoiceDate = new Date().toISOString().split('T')[0]
+  const gstAmount = (invoice.amount * invoice.gstRate) / 100
+  const totalAmount = invoice.amount + gstAmount
+
+  const results: Record<string, unknown> = {
+    invoiceNumber,
+    clientName: invoice.clientName,
+    amount: invoice.amount,
+    gstAmount,
+    totalAmount,
+    description: invoice.description,
+    gstRate: invoice.gstRate,
+  }
+
+  const steps: string[] = []
+
+  // Step 2: Create Razorpay payment link
+  const paymentResult = await createRazorpayPaymentLink({
+    amount: totalAmount,
+    clientName: invoice.clientName,
+    clientPhone: invoice.clientPhone,
+    clientEmail: invoice.clientEmail,
+    description: invoice.description,
+    invoiceNumber,
+    dueDate: invoice.dueDate,
+  })
+
+  let paymentLink: string | undefined
+  if (paymentResult.success && paymentResult.paymentLinkUrl) {
+    paymentLink = paymentResult.paymentLinkUrl
+    results.paymentLink = paymentLink
+    steps.push('✅ Payment link created')
+  } else {
+    steps.push(`⚠️ Payment link skipped: ${paymentResult.error}`)
+  }
+
+  // Step 3: Generate GST invoice PDF
+  const pdfResult = await generateInvoicePDF({
+    invoiceNumber,
+    invoiceDate,
+    dueDate: invoice.dueDate || invoiceDate,
+    businessName: invoice.businessName,
+    businessGSTIN: invoice.businessGSTIN,
+    clientName: invoice.clientName,
+    clientPhone: invoice.clientPhone,
+    clientEmail: invoice.clientEmail,
+    description: invoice.description,
+    amount: invoice.amount,
+    gstRate: invoice.gstRate,
+    paymentLink,
+  })
+
+  let pdfUrl: string | undefined
+  if (pdfResult.success) {
+    pdfUrl = pdfResult.pdfUrl
+    results.pdfUrl = pdfUrl
+    steps.push('✅ GST invoice PDF generated')
+  } else {
+    steps.push(`⚠️ PDF skipped: ${pdfResult.error}`)
+  }
+
+  // Step 4: Send via WhatsApp (only if phone provided)
+  if (invoice.clientPhone) {
+    const waResult = await sendInvoiceViaWhatsApp({
+      to: invoice.clientPhone,
+      clientName: invoice.clientName,
+      invoiceNumber,
+      amount: invoice.amount,
+      gstTotal: totalAmount,
+      description: invoice.description,
+      paymentLink,
+      pdfBase64: pdfResult.pdfBase64,
+      pdfUrl,
+      instanceName: ctx.evolutionInstanceName,
+    })
+
+    if (waResult.success) {
+      steps.push('✅ Invoice sent on WhatsApp')
+      results.whatsappMessageId = waResult.messageId
+    } else {
+      steps.push(`⚠️ WhatsApp skipped: ${waResult.error}`)
+    }
+  } else {
+    steps.push('ℹ️ WhatsApp skipped (no phone number provided)')
+  }
+
+  // Step 5: Log to Google Sheets
+  await logInvoiceToSheets({
+    invoiceNumber,
+    invoiceDate,
+    dueDate: invoice.dueDate || invoiceDate,
+    clientName: invoice.clientName,
+    clientPhone: invoice.clientPhone,
+    clientEmail: invoice.clientEmail,
+    description: invoice.description,
+    baseAmount: invoice.amount,
+    gstRate: invoice.gstRate,
+    gstAmount,
+    totalAmount,
+    paymentLink,
+    pdfUrl,
+    status: 'SENT',
+    businessName: invoice.businessName,
+  })
+  steps.push('✅ Logged to Google Sheets')
+
+  // Build response message
+  const summary = [
+    `✅ *Invoice ${invoiceNumber} Created!*`,
+    '',
+    `👤 Client: ${invoice.clientName}`,
+    `📝 For: ${invoice.description}`,
+    `💰 Amount: ₹${invoice.amount.toLocaleString('en-IN')}`,
+    `🧾 GST (${invoice.gstRate}%): ₹${gstAmount.toLocaleString('en-IN')}`,
+    `💵 *Total: ₹${totalAmount.toLocaleString('en-IN')}*`,
+    `📅 Due: ${invoice.dueDate}`,
+  ]
+
+  if (paymentLink) {
+    summary.push('', `💳 *Payment Link:*`, paymentLink)
+  }
+  if (pdfUrl) {
+    summary.push('', `📄 *Invoice PDF:*`, pdfUrl)
+  }
+
+  summary.push('', ...steps)
+
+  return {
+    success: true,
+    message: summary.join('\n'),
+    data: results,
+  }
+}

@@ -5,6 +5,7 @@ This document maps where Supabase needs to be wired into existing Phase 1-9 code
 ## Overview
 
 **Migration Path:**
+
 - Phase 9 uses mock data (hardcoded arrays)
 - Wire Supabase → code persists real data
 - Phases 10-15 depend on this wiring
@@ -250,12 +251,7 @@ export async function POST(request: NextRequest) {
 
     if (direction === 'inbound' && body) {
       // Inbound SMS
-      const conversation = await getOrCreateConversation(
-        userId,
-        agentId,
-        from,
-        'sms'
-      )
+      const conversation = await getOrCreateConversation(userId, agentId, from, 'sms')
 
       // Queue agent job
       await queueAgentJob({
@@ -270,12 +266,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     } else if (!body) {
       // Inbound call
-      const conversation = await getOrCreateConversation(
-        userId,
-        agentId,
-        from,
-        'phone'
-      )
+      const conversation = await getOrCreateConversation(userId, agentId, from, 'phone')
 
       await queueAgentJob({
         agentId,
@@ -320,7 +311,7 @@ import { queueAgentJob } from '@/lib/queue/producer'
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json() as {
+    const payload = (await request.json()) as {
       event: string
       instance: string
       data?: {
@@ -356,12 +347,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    const conversation = await getOrCreateConversation(
-      agent.user_id,
-      agentId,
-      from,
-      'whatsapp'
-    )
+    const conversation = await getOrCreateConversation(agent.user_id, agentId, from, 'whatsapp')
 
     // Queue LangGraph job
     await queueAgentJob({
@@ -530,4 +516,3 @@ When deploying to production:
 5. Monitor Supabase logs for errors
 
 All Phase 10+ features depend on this wiring. Without Supabase, data won't persist and RAG won't work.
-

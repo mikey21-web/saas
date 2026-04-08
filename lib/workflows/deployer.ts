@@ -57,6 +57,7 @@ export async function deployAgent(config: DeploymentConfig): Promise<DeploymentR
       return {
         success: false,
         agentId: config.agentId,
+        executionMode: 'langgraph',
         status: 'error',
         message: 'No credentials provided',
         error: 'Credentials are required for deployment',
@@ -71,6 +72,7 @@ export async function deployAgent(config: DeploymentConfig): Promise<DeploymentR
       return {
         success: false,
         agentId: config.agentId,
+        executionMode: 'langgraph',
         status: 'error',
         message: 'Failed to save credentials',
         error: credResult.error,
@@ -116,6 +118,7 @@ export async function deployAgent(config: DeploymentConfig): Promise<DeploymentR
       return {
         success: false,
         agentId: config.agentId,
+        executionMode: 'langgraph',
         status: 'error',
         message: 'Failed to activate agent',
         error: updateError.message,
@@ -153,6 +156,7 @@ export async function deployAgent(config: DeploymentConfig): Promise<DeploymentR
     return {
       success: false,
       agentId: config.agentId,
+      executionMode: 'langgraph',
       status: 'error',
       message: 'Deployment failed',
       error: String(err),
@@ -290,13 +294,13 @@ function getTemplateId(type: string): string {
   return templates[type] || 'tpl_default'
 }
 
-function buildWorkflowNodes(config: DeploymentConfig, templateId: string) {
+function buildWorkflowNodes(_config: DeploymentConfig, _templateId: string) {
   // This would build the actual n8n node structure
   // For now, return a placeholder
   return []
 }
 
-function buildWorkflowConnections(config: DeploymentConfig, templateId: string) {
+function buildWorkflowConnections(_config: DeploymentConfig, _templateId: string) {
   // This would build connections between nodes
   // For now, return a placeholder
   return {}

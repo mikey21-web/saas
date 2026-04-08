@@ -1,0 +1,279 @@
+/**
+ * GST-compliant Invoice PDF Generator using pdf-lib
+ * No n8n, no PDF.co — pure Node.js
+ */
+
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { createClient } from '@supabase/supabase-js'
+
+export interface InvoicePDFInput {
+  invoiceNumber: string
+  invoiceDate: string // YYYY-MM-DD
+  dueDate: string
+  businessName: string
+  businessGSTIN?: string
+  businessAddress?: string
+  clientName: string
+  clientPhone?: string
+  clientEmail?: string
+  clientGSTIN?: string
+  description: string
+  amount: number // before GST
+  gstRate: number // 18, 12, 5, etc.
+  paymentLink?: string
+}
+
+export interface PDFResult {
+  success: boolean
+  pdfBase64?: string
+  pdfUrl?: string
+  error?: string
+}
+
+function calcGST(amount: number, rate: number, isInterState: boolean) {
+  const gstAmount = (amount * rate) / 100
+  if (isInterState) {
+    return { igst: gstAmount, cgst: 0, sgst: 0, total: amount + gstAmount }
+  }
+  return { igst: 0, cgst: gstAmount / 2, sgst: gstAmount / 2, total: amount + gstAmount }
+}
+
+function formatCurrency(n: number): string {
+  return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+export async function generateInvoicePDF(input: InvoicePDFInput): Promise<PDFResult> {
+  try {
+    const isInterState = false // default intra-state; can be made dynamic later
+    const gst = calcGST(input.amount, input.gstRate, isInterState)
+
+    const doc = await PDFDocument.create()
+    const page = doc.addPage([595, 842]) // A4
+    const { width, height } = page.getSize()
+
+    const boldFont = await doc.embedFont(StandardFonts.HelveticaBold)
+    const regularFont = await doc.embedFont(StandardFonts.Helvetica)
+
+    // Colors
+    const purple = rgb(0.4, 0.2, 0.8)
+    const black = rgb(0, 0, 0)
+    const gray = rgb(0.5, 0.5, 0.5)
+    const lightGray = rgb(0.95, 0.95, 0.95)
+    const white = rgb(1, 1, 1)
+
+    // Header bar
+    page.drawRectangle({ x: 0, y: height - 80, width, height: 80, color: purple })
+
+    // Company name in header
+    page.drawText(input.businessName.toUpperCase(), {
+      x: 40,
+      y: height - 40,
+      size: 20,
+      font: boldFont,
+      color: white,
+    })
+
+    // GSTIN in header if available
+    if (input.businessGSTIN) {
+      page.drawText(`GSTIN: ${input.businessGSTIN}`, {
+        x: 40,
+        y: height - 60,
+        size: 9,
+        font: regularFont,
+        color: rgb(0.9, 0.9, 0.9),
+      })
+    }
+
+    // TAX INVOICE title on right
+    page.drawText('TAX INVOICE', {
+      x: width - 180,
+      y: height - 35,
+      size: 22,
+      font: boldFont,
+      color: white,
+    })
+
+    // Invoice number and date block
+    let y = height - 110
+    page.drawText(`Invoice No: ${input.invoiceNumber}`, {
+      x: 40,
+      y,
+      size: 11,
+      font: boldFont,
+      color: black,
+    })
+    page.drawText(`Date: ${input.invoiceDate}`, {
+      x: width - 200,
+      y,
+      size: 10,
+      font: regularFont,
+      color: black,
+    })
+    y -= 18
+    page.drawText(`Due Date: ${input.dueDate}`, {
+      x: width - 200,
+      y,
+      size: 10,
+      font: regularFont,
+      color: black,
+    })
+
+    // Bill To section
+    y -= 30
+    page.drawText('BILL TO', { x: 40, y, size: 10, font: boldFont, color: purple })
+    y -= 18
+    page.drawText(input.clientName, { x: 40, y, size: 12, font: boldFont, color: black })
+    if (input.clientPhone) {
+      y -= 16
+      page.drawText(`Phone: ${input.clientPhone}`, {
+        x: 40,
+        y,
+        size: 10,
+        font: regularFont,
+        color: gray,
+      })
+    }
+    if (input.clientEmail) {
+      y -= 16
+      page.drawText(`Email: ${input.clientEmail}`, {
+        x: 40,
+        y,
+        size: 10,
+        font: regularFont,
+        color: gray,
+      })
+    }
+    if (input.clientGSTIN) {
+      y -= 16
+      page.drawText(`GSTIN: ${input.clientGSTIN}`, {
+        x: 40,
+        y,
+        size: 10,
+        font: regularFont,
+        color: gray,
+      })
+    }
+
+    // Items table
+    y -= 40
+    // Table header
+    page.drawRectangle({ x: 40, y: y - 4, width: width - 80, height: 24, color: purple })
+    page.drawText('#', { x: 50, y: y + 4, size: 10, font: boldFont, color: white })
+    page.drawText('Description', { x: 80, y: y + 4, size: 10, font: boldFont, color: white })
+    page.drawText('Amount', { x: width - 130, y: y + 4, size: 10, font: boldFont, color: white })
+
+    y -= 30
+    // Item row
+    page.drawRectangle({ x: 40, y: y - 6, width: width - 80, height: 22, color: lightGray })
+    page.drawText('1', { x: 50, y: y + 4, size: 10, font: regularFont, color: black })
+    page.drawText(input.description, { x: 80, y: y + 4, size: 10, font: regularFont, color: black })
+    page.drawText(formatCurrency(input.amount), {
+      x: width - 130,
+      y: y + 4,
+      size: 10,
+      font: regularFont,
+      color: black,
+    })
+
+    // Totals section
+    y -= 50
+    const rightCol = width - 180
+    const valueCol = width - 60
+
+    const drawRow = (label: string, value: string, bold = false, highlight = false) => {
+      if (highlight) {
+        page.drawRectangle({
+          x: rightCol - 10,
+          y: y - 6,
+          width: width - rightCol + 50,
+          height: 22,
+          color: purple,
+        })
+      }
+      const color = highlight ? white : black
+      const font = bold ? boldFont : regularFont
+      page.drawText(label, { x: rightCol, y: y + 4, size: 10, font, color })
+      page.drawText(value, { x: valueCol - value.length * 6, y: y + 4, size: 10, font, color })
+      y -= 24
+    }
+
+    drawRow('Subtotal:', formatCurrency(input.amount))
+    if (!isInterState) {
+      drawRow(`CGST (${input.gstRate / 2}%):`, formatCurrency(gst.cgst))
+      drawRow(`SGST (${input.gstRate / 2}%):`, formatCurrency(gst.sgst))
+    } else {
+      drawRow(`IGST (${input.gstRate}%):`, formatCurrency(gst.igst))
+    }
+    drawRow('TOTAL:', formatCurrency(gst.total), true, true)
+
+    // Payment link section
+    if (input.paymentLink) {
+      y -= 20
+      page.drawText('Pay Online:', { x: 40, y, size: 10, font: boldFont, color: purple })
+      y -= 18
+      page.drawText(input.paymentLink, {
+        x: 40,
+        y,
+        size: 9,
+        font: regularFont,
+        color: rgb(0.2, 0.4, 0.8),
+      })
+    }
+
+    // Footer
+    page.drawLine({
+      start: { x: 40, y: 60 },
+      end: { x: width - 40, y: 60 },
+      thickness: 1,
+      color: lightGray,
+    })
+    page.drawText('This is a computer-generated invoice. No signature required.', {
+      x: 40,
+      y: 45,
+      size: 8,
+      font: regularFont,
+      color: gray,
+    })
+    page.drawText('Thank you for your business!', {
+      x: 40,
+      y: 30,
+      size: 8,
+      font: regularFont,
+      color: gray,
+    })
+
+    const pdfBytes = await doc.save()
+    const pdfBase64 = Buffer.from(pdfBytes).toString('base64')
+
+    // Upload to Supabase Storage if configured
+    let pdfUrl: string | undefined
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+
+      const fileName = `invoices/${input.invoiceNumber}.pdf`
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: true,
+        })
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('documents').getPublicUrl(fileName)
+        pdfUrl = urlData.publicUrl
+      }
+    } catch {
+      // Storage upload optional — PDF still generated
+    }
+
+    return { success: true, pdfBase64, pdfUrl }
+  } catch (error) {
+    return {
+      success: false,
+      error: `PDF generation failed: ${error instanceof Error ? error.message : String(error)}`,
+    }
+  }
+}

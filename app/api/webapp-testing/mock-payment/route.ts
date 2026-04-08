@@ -26,48 +26,40 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (!agent) {
-      return NextResponse.json(
-        { error: 'Agent not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
 
     // Update agent status to active
-    const { error: updateError } = await ((supabaseAdmin as any)
+    const { error: updateError } = await (supabaseAdmin as any)
       .from('agents')
       .update({
         status: 'active',
         deployed_at: new Date().toISOString(),
       })
       .eq('id', agentId)
-      .eq('user_id', userId)) as any
+      .eq('user_id', userId)
 
     if (updateError) {
-      return NextResponse.json(
-        { error: `Update failed: ${updateError.message}` },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: `Update failed: ${updateError.message}` }, { status: 500 })
     }
 
     // Log payment activity
     const paymentId = `mock_${provider}_${Date.now()}`
-    const { error: logError } = await ((supabaseAdmin as any)
-      .from('activity_logs')
-      .insert({
-        user_id: userId,
-        agent_id: agentId,
-        action: 'payment_received',
-        details: {
-          paymentId,
-          provider,
-          status: 'success',
-          mock: true,
-          timestamp: new Date().toISOString(),
-        },
-      })) as any
+    const { error: logError } = await (supabaseAdmin as any).from('activity_logs').insert({
+      user_id: userId,
+      agent_id: agentId,
+      action: 'payment_received',
+      details: {
+        paymentId,
+        provider,
+        status: 'success',
+        mock: true,
+        timestamp: new Date().toISOString(),
+      },
+    })
 
     if (logError) {
-      console.warn('Activity log failed:', logError)
+      // console.warn('Activity log failed:', logError)
     }
 
     return NextResponse.json({
@@ -80,10 +72,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Mock payment error:', error)
-    return NextResponse.json(
-      { error: String(error) },
-      { status: 500 }
-    )
+    // console.error('Mock payment error:', error)
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

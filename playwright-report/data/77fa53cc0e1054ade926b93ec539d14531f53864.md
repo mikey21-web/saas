@@ -1,0 +1,51 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: ACTIONAGENTS
+      - generic [ref=e8]: Sign in to your dashboard
+      - paragraph [ref=e9]: Manage your agents, view stats, and chat directly.
+    - iframe [active] [ref=e13]:
+      - button "Sign in with Google. Opens in new tab" [active] [ref=f1e3] [cursor=pointer]:
+        - generic [ref=f1e5]:
+          - img [ref=f1e8]
+          - generic [ref=f1e15]: Sign in with Google
+  - contentinfo [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - heading "Ecosystem" [level=4] [ref=e17]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link "Academy" [ref=e20] [cursor=pointer]:
+              - /url: /academy
+          - listitem [ref=e21]:
+            - link "Agent Store" [ref=e22] [cursor=pointer]:
+              - /url: /store
+          - listitem [ref=e23]:
+            - link "Community" [ref=e24] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/FRrZn9tAEGICSBeNQ2PZwb
+          - listitem [ref=e25]:
+            - link "Pricing" [ref=e26] [cursor=pointer]:
+              - /url: /#pricing
+      - generic [ref=e27]:
+        - heading "Resources" [level=4] [ref=e28]
+        - list [ref=e29]:
+          - listitem [ref=e30]:
+            - link "Create an Agent" [ref=e31] [cursor=pointer]:
+              - /url: /agents/create
+          - listitem [ref=e32]:
+            - link "Pixel Office" [ref=e33] [cursor=pointer]:
+              - /url: /office
+          - listitem [ref=e34]:
+            - link "Skills" [ref=e35] [cursor=pointer]:
+              - /url: /skills
+          - listitem [ref=e36]:
+            - link "Support" [ref=e37] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/FRrZn9tAEGICSBeNQ2PZwb
+      - generic [ref=e38]:
+        - generic [ref=e39]: ACTIONAGENTS
+        - paragraph [ref=e40]: The first real AI employee.
+        - paragraph [ref=e41]: © 2026 Action Agents
+```

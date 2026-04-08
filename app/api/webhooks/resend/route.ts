@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 /**
  * Resend webhook — bounce + complaint events
@@ -6,7 +7,31 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
-    const event = await request.json() as {
+    const rawBody = await request.text()
+    const signature =
+      request.headers.get('resend-signature') || request.headers.get('x-resend-signature') || ''
+    const secret = process.env.RESEND_WEBHOOK_SECRET || ''
+
+    if (!secret) {
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    }
+
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    }
+
+    const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+    if (
+      expectedSignature.length !== signature.length ||
+      !crypto.timingSafeEqual(
+        Buffer.from(expectedSignature, 'utf8'),
+        Buffer.from(signature, 'utf8')
+      )
+    ) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+
+    const event = JSON.parse(rawBody) as {
       type: string
       data?: {
         email_id?: string

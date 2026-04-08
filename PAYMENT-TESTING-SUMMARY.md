@@ -5,6 +5,7 @@
 ### 1. **Enhanced Webhook Handlers**
 
 #### Stripe Webhook (`app/api/webhooks/stripe/route.ts`)
+
 ✓ Signature verification with HMAC-SHA256
 ✓ checkout.session.completed event handling
 ✓ Agent status update: pending → active
@@ -12,6 +13,7 @@
 ✓ charge.failed event tracking
 
 #### Razorpay Webhook (`app/api/webhooks/razorpay/route.ts`)
+
 ✓ Signature verification
 ✓ payment.authorized event handling
 ✓ Agent activation on successful payment
@@ -21,6 +23,7 @@
 ### 2. **Enhanced Checkout Routes**
 
 #### Stripe Checkout (`app/api/checkout/stripe/route.ts`)
+
 ✓ Agent-specific checkout sessions
 ✓ client_reference_id for webhook correlation
 ✓ Metadata carrying agentId and userId
@@ -28,6 +31,7 @@
 ✓ Success/cancel URL routing
 
 #### Razorpay Checkout (existing)
+
 ✓ INR pricing
 ✓ UPI payment support
 ✓ Agent deployment triggering
@@ -37,6 +41,7 @@
 **Route:** `http://localhost:3000/test-driven-development`
 
 Features:
+
 - ✓ Real-time test runner with visual feedback
 - ✓ 6 test scenarios covering full payment flow
 - ✓ Pass/fail status with timing metrics
@@ -45,6 +50,7 @@ Features:
 - ✓ Test documentation inline
 
 Test Scenarios:
+
 1. Razorpay Webhook Verification
 2. Stripe Webhook Verification
 3. Agent Creation with skipPayment
@@ -57,6 +63,7 @@ Test Scenarios:
 **Route:** `http://localhost:3000/webapp-testing`
 
 Features:
+
 - ✓ Step-by-step testing guide
 - ✓ cURL examples for all endpoints
 - ✓ Node.js/JavaScript test code
@@ -65,6 +72,7 @@ Features:
 - ✓ Troubleshooting section
 
 Sections:
+
 1. Create Agent with skipPayment
 2. Razorpay Webhook Testing
 3. Stripe Webhook Testing
@@ -86,6 +94,7 @@ Sections:
 **File:** `thunder-client-payment-tests.json`
 
 Pre-configured requests:
+
 1. Create Agent (skipPayment)
 2. Mock Razorpay Webhook
 3. Mock Stripe Webhook
@@ -98,6 +107,7 @@ Pre-configured requests:
 **File:** `TESTING-GUIDE.md`
 
 Covers:
+
 - Quick start (3 minutes)
 - Architecture overview
 - Thunder Client setup
@@ -111,38 +121,44 @@ Covers:
 
 ## Quick Access URLs
 
-| Feature | URL |
-|---------|-----|
-| Test Dashboard | `http://localhost:3000/test-driven-development` |
-| API Testing Docs | `http://localhost:3000/webapp-testing` |
+| Feature          | URL                                                            |
+| ---------------- | -------------------------------------------------------------- |
+| Test Dashboard   | `http://localhost:3000/test-driven-development`                |
+| API Testing Docs | `http://localhost:3000/webapp-testing`                         |
 | Mock Payment API | `http://localhost:3000/api/webapp-testing/mock-payment` (POST) |
-| Test Runner API | `http://localhost:3000/api/test-driven-development` (POST) |
+| Test Runner API  | `http://localhost:3000/api/test-driven-development` (POST)     |
 
 ---
 
 ## Testing Flow (5 Steps)
 
 ### Step 1: Visit Dashboard
+
 ```
 http://localhost:3000/test-driven-development
 ```
 
 ### Step 2: Run All Tests
+
 Click "Run All Tests" button
 Watch tests execute in real-time
 
 ### Step 3: Review Results
+
 ✓ Passing tests show green checkmarks
 ✗ Failed tests show red alerts
 Timing metrics show performance
 
 ### Step 4: Use Mock Simulator
+
 Click "Test Razorpay Flow" or "Test Stripe Flow"
 Instant payment simulation
 Verify agent activation
 
 ### Step 5: Verify Database
+
 Check Supabase dashboard:
+
 - agents table: status='active'
 - activity_logs table: payment_received entry
 
@@ -208,12 +224,14 @@ Agent Ready to Send/Receive Messages
 ## Key Features
 
 ### No Real Payments Required
+
 - All testing uses mock data
 - Stripe/Razorpay test mode compatible
 - Zero charge risk
 - Instant feedback
 
 ### Production Ready
+
 - Proper signature verification
 - Error handling
 - Database transactions
@@ -221,6 +239,7 @@ Agent Ready to Send/Receive Messages
 - RLS policies enforced
 
 ### Developer Friendly
+
 - Clear test UI
 - Exported collections for Thunder Client
 - cURL examples
@@ -228,6 +247,7 @@ Agent Ready to Send/Receive Messages
 - Comprehensive documentation
 
 ### Code Quality
+
 - Stripe and Razorpay secrets handled securely
 - Webhook signatures verified before processing
 - Proper error responses
@@ -238,6 +258,7 @@ Agent Ready to Send/Receive Messages
 ## Test Results Examples
 
 ### ✓ Successful Test
+
 ```
 Razorpay Webhook Verification [PASSED]
 Duration: 245ms
@@ -245,12 +266,14 @@ Message: Razorpay webhook processed successfully
 ```
 
 ### ✗ Failed Test
+
 ```
 Stripe Webhook Verification [FAILED]
 Message: Invalid signature
 ```
 
 ### ⏳ Running Test
+
 ```
 Agent Activation After Payment [RUNNING...]
 ```
@@ -260,11 +283,13 @@ Agent Activation After Payment [RUNNING...]
 ## Using With Thunder Client
 
 ### Install Extension
+
 1. Open VS Code Extensions (Ctrl+Shift+X)
 2. Search "Thunder Client"
 3. Click Install
 
 ### Import Collection
+
 1. Go to `/webapp-testing`
 2. Click "Export Thunder Client Collection"
 3. Open Thunder Client
@@ -272,6 +297,7 @@ Agent Activation After Payment [RUNNING...]
 5. Select downloaded JSON file
 
 ### Run Requests
+
 1. Create Agent request (save the agentId)
 2. Update Razorpay request with agentId
 3. Update Stripe request with agentId
@@ -284,6 +310,7 @@ Agent Activation After Payment [RUNNING...]
 ## Database Queries
 
 ### Check Agent Status After Payment
+
 ```sql
 SELECT id, status, deployed_at
 FROM agents
@@ -292,6 +319,7 @@ ORDER BY created_at DESC LIMIT 1;
 ```
 
 ### Check Payment Activity
+
 ```sql
 SELECT action, details, created_at
 FROM activity_logs
@@ -301,6 +329,7 @@ ORDER BY created_at DESC;
 ```
 
 ### Verify RLS Policies
+
 ```sql
 SELECT * FROM pg_policies
 WHERE tablename IN ('agents', 'activity_logs');
@@ -350,16 +379,19 @@ After Payment Testing is Complete:
 ### Common Issues
 
 **Webhook not activating agent:**
+
 - Check agentId format in webhook
 - Verify userId matches agent's user_id
 - Confirm RLS allows service role
 
 **Database not updating:**
+
 - Check Supabase connection
 - Verify RLS policies
 - Check for transaction errors
 
 **Signature verification failing:**
+
 - Ensure webhook secret is set
 - Check signature header is present
 - Verify body not modified
@@ -371,6 +403,7 @@ See `TESTING-GUIDE.md` for detailed troubleshooting.
 ## Summary
 
 **Total Files Created:** 8
+
 - 2 API routes (test-driven-development, mock-payment)
 - 2 UI pages (test dashboard, testing docs)
 - 2 Webhook handlers (enhanced Razorpay, Stripe)

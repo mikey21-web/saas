@@ -47,12 +47,12 @@ export async function createAgent(userId: string, agentData: any): Promise<any> 
 }
 
 export async function updateAgent(userId: string, agentId: string, updates: any): Promise<any> {
-  const { data, error } = await ((supabase.from('agents') as any)
+  const { data, error } = await (supabase.from('agents') as any)
     .update(updates)
     .eq('user_id', userId)
     .eq('id', agentId)
     .select()
-    .single())
+    .single()
   if (error) throw error
   return data
 }
@@ -77,7 +77,9 @@ export async function getOrCreateConversation(
 
   const { data: created, error } = await (supabase
     .from('conversations' as any)
-    .insert([{ user_id: userId, agent_id: agentId, contact_phone_or_email: contactPhoneOrEmail, channel }] as any)
+    .insert([
+      { user_id: userId, agent_id: agentId, contact_phone_or_email: contactPhoneOrEmail, channel },
+    ] as any)
     .select()
     .single() as any)
 
@@ -129,7 +131,10 @@ export async function createContact(userId: string, contact: any): Promise<any> 
 }
 
 // Template: Usage tracking
-export async function updateAgentUsage(agentId: string, channel: 'whatsapp' | 'email' | 'sms' | 'phone' | 'api'): Promise<void> {
+export async function updateAgentUsage(
+  agentId: string,
+  channel: 'whatsapp' | 'email' | 'sms' | 'phone' | 'api'
+): Promise<void> {
   const fieldMap = {
     whatsapp: 'monthly_whatsapp_used',
     email: 'monthly_emails_used',
@@ -140,19 +145,29 @@ export async function updateAgentUsage(agentId: string, channel: 'whatsapp' | 'e
   const field = fieldMap[channel]
 
   // Increment usage counter
-  const { error } = await ((supabase.rpc as any)('increment_agent_usage', {
+  const { error } = await (supabase.rpc as any)('increment_agent_usage', {
     agent_id: agentId,
     field_name: field,
     increment_value: 1,
-  }))
+  })
 
   if (error) throw error
 }
 
 // Template: Activity logging
-export async function logActivity(userId: string, action: string, agentId?: string, details?: any): Promise<void> {
-  const { error } = await ((supabase
-    .from('activity_logs') as any)
-    .insert([{ user_id: userId, agent_id: agentId, action, details: details ? JSON.stringify(details) : null }]))
+export async function logActivity(
+  userId: string,
+  action: string,
+  agentId?: string,
+  details?: any
+): Promise<void> {
+  const { error } = await (supabase.from('activity_logs') as any).insert([
+    {
+      user_id: userId,
+      agent_id: agentId,
+      action,
+      details: details ? JSON.stringify(details) : null,
+    },
+  ])
   if (error) console.error('Failed to log activity:', error)
 }

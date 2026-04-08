@@ -28,8 +28,7 @@ export async function executeSkill(
   )
 
   try {
-    const result = await Promise.race([skill.execute(parsed.data, context), timeout])
-    return result
+    return await Promise.race([skill.execute(parsed.data, context), timeout])
   } catch (e: unknown) {
     return { success: false, output: '', error: (e as Error).message }
   }

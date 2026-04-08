@@ -23,16 +23,9 @@ export async function POST(request: NextRequest) {
         tier,
       })
     } else {
-      return NextResponse.json(
-        { error: 'Payment verification failed' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Payment verification error:', error)
-    return NextResponse.json(
-      { error: 'Verification failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

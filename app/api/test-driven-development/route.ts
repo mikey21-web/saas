@@ -280,7 +280,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           passed,
           duration,
-          message: passed ? `Activity logged: ${newLogs?.length} entries` : 'No activity logs found',
+          message: passed
+            ? `Activity logged: ${newLogs?.length} entries`
+            : 'No activity logs found',
         })
       }
 
@@ -289,9 +291,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error('Test error:', error)
-    return NextResponse.json(
-      { passed: false, message: String(error) },
-      { status: 500 }
-    )
+    return NextResponse.json({ passed: false, message: String(error) }, { status: 500 })
   }
 }

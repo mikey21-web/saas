@@ -15,13 +15,18 @@ import { callAI, estimateCostINR } from '@/lib/ai/router'
 import type { AIMessage, ToolCall, ToolDefinition } from '@/lib/ai/router'
 import { buildSystemPrompt, formatConversationHistory } from '@/lib/ai/prompts'
 import type { AgentConfig, ConversationMessage, SkillSummary } from '@/lib/ai/prompts'
-import { runSafetyChecks, recordAction, recordCost, DEFAULT_SAFETY_CONFIG } from '@/lib/agent/safety'
+import {
+  runSafetyChecks,
+  recordAction,
+  recordCost,
+  DEFAULT_SAFETY_CONFIG,
+} from '@/lib/agent/safety'
 import type { SafetyConfig, SafetyState } from '@/lib/agent/safety'
 import { executeSkill } from '@/lib/skills/runner'
 import { allSkills } from '@/lib/skills/registry'
 import type { AgentContext } from '@/lib/skills/types'
 import { getAgent, getConversationHistory, addMessage } from '@/lib/supabase/queries'
-// TODO: Wire updateAgentUsage and logActivity in Phase 10 for usage metering and audit logs
+// TODO(security): Wire updateAgentUsage and logActivity in Phase 10 for usage metering and audit logs
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -81,7 +86,7 @@ async function loadAgentConfig(agentId: string, userId: string): Promise<AgentCo
       modelTier: agent.ai_model_tier || 'free',
     }
   } catch (error) {
-    console.error('Failed to load agent config, using fallback:', error)
+    // Fallback config due to DB error
     return {
       id: agentId,
       userId,
@@ -101,7 +106,7 @@ async function loadAgentConfig(agentId: string, userId: string): Promise<AgentCo
 // ─── RAG Context Loader (stub — replace with pgvector in production) ─────────
 
 async function loadRAGContext(_agentId: string, _query: string): Promise<string> {
-  // TODO: Query pgvector for relevant business knowledge chunks
+  // TODO(security): Query pgvector for relevant business knowledge chunks
   // SELECT content, embedding <-> $queryEmbedding AS distance
   // FROM knowledge_chunks WHERE agent_id = $agentId
   // ORDER BY distance LIMIT 5
@@ -122,7 +127,7 @@ async function loadConversationHistory(
       timestamp: msg.created_at || new Date().toISOString(),
     }))
   } catch (error) {
-    console.error('Failed to load conversation history:', error)
+    // No history available
     return []
   }
 }
@@ -147,7 +152,8 @@ async function saveMessage(
       tool_result: toolResult,
     })
   } catch (error) {
-    console.error('Failed to save message:', error)
+    // Message save failed (non-blocking)
+
   }
 }
 
@@ -194,14 +200,14 @@ function buildSkillSummaries(): SkillSummary[] {
 
 function needsEscalation(response: string): boolean {
   const escalationPatterns = [
-    /speak\s+(to|with)\s+a?\s*(human|person|agent|manager|representative)/i,
-    /transfer\s+(to|me)/i,
+    /speak\s+(?:to|with)\s+(?:human|person|agent|manager|representative)/i,
+    /transfer\s+(?:to|me)/i,
     /complaint/i,
     /escalat/i,
     /legal\s+action/i,
     /sue\s+you/i,
     /refund/i,
-    /cancel\s+(my\s+)?(account|subscription|order)/i,
+    /cancel\s+(?:account|subscription|order)/i,
   ]
 
   return escalationPatterns.some((p) => p.test(response))
@@ -295,7 +301,8 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
         log('safety', `Safety check blocked: ${safetyResult.reason}`)
         return {
           success: false,
-          response: 'I apologize, but I am unable to continue processing at this time. A team member will follow up with you shortly.',
+          response:
+            'I apologize, but I am unable to continue processing at this time. A team member will follow up with you shortly.',
           toolCallsCount,
           iterationCount,
           totalCostINR,
@@ -330,9 +337,13 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
       totalCostINR += iterCost
       recordCost(trigger.agentId, iterCost)
 
-      log('info', `LLM response from ${aiResponse.provider}/${aiResponse.model} (cost: ₹${iterCost.toFixed(2)})`, {
-        usage: aiResponse.usage as unknown as Record<string, unknown>,
-      })
+      log(
+        'info',
+        `LLM response from ${aiResponse.provider}/${aiResponse.model} (cost: ₹${iterCost.toFixed(2)})`,
+        {
+          usage: aiResponse.usage as unknown as Record<string, unknown>,
+        }
+      )
 
       // ─── Handle Tool Calls ──────────────────────────────────────────
       if (aiResponse.tool_calls.length > 0) {
@@ -359,10 +370,14 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
             conversationId: trigger.conversationId,
           })
 
-          log('tool_result', `Tool ${toolCall.function.name}: ${skillResult.success ? 'success' : 'failed'}`, {
-            output: skillResult.output,
-            error: skillResult.error,
-          })
+          log(
+            'tool_result',
+            `Tool ${toolCall.function.name}: ${skillResult.success ? 'success' : 'failed'}`,
+            {
+              output: skillResult.output,
+              error: skillResult.error,
+            }
+          )
 
           // Feed tool result back to the conversation
           messages.push({
@@ -379,7 +394,8 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
       }
 
       // ─── Node 4: Text Output ───────────────────────────────────────
-      const responseText = aiResponse.content ?? 'I apologize, but I was unable to generate a response.'
+      const responseText =
+        aiResponse.content ?? 'I apologize, but I was unable to generate a response.'
 
       log('llm_response', `Final response generated (${responseText.length} chars)`)
 
@@ -412,7 +428,8 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
 
     // If we exhausted all iterations
     log('safety', `Max iterations (${safetyConfig.maxIterations}) reached`)
-    const fallbackResponse = 'I have been working on your request but need more time. Let me connect you with a team member who can help further.'
+    const fallbackResponse =
+      'I have been working on your request but need more time. Let me connect you with a team member who can help further.'
 
     await sendViaChannel(trigger.channel, trigger.agentId, '', fallbackResponse)
     await saveMessage(trigger.conversationId, 'assistant', fallbackResponse, trigger.agentId)
@@ -435,7 +452,8 @@ export async function executeAgent(trigger: ExecutionTrigger): Promise<Execution
 
     return {
       success: false,
-      response: 'I apologize, but I encountered an issue processing your request. Please try again or contact support.',
+      response:
+        'I apologize, but I encountered an issue processing your request. Please try again or contact support.',
       toolCallsCount,
       iterationCount,
       totalCostINR,

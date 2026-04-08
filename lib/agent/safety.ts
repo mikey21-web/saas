@@ -14,8 +14,8 @@ export interface SafetyConfig {
   maxCostPerRunINR: number
   maxCostPerDayINR: number
   maxIterations: number
-  activeHoursStart: number  // 0-23 IST
-  activeHoursEnd: number    // 0-23 IST
+  activeHoursStart: number // 0-23 IST
+  activeHoursEnd: number // 0-23 IST
   emergencyKillSwitch: boolean
 }
 
@@ -62,8 +62,8 @@ export const DEFAULT_SAFETY_CONFIG: SafetyConfig = {
   maxCostPerRunINR: 100,
   maxCostPerDayINR: 500,
   maxIterations: 10,
-  activeHoursStart: 9,   // 9 AM IST
-  activeHoursEnd: 21,    // 9 PM IST
+  activeHoursStart: 9, // 9 AM IST
+  activeHoursEnd: 21, // 9 PM IST
   emergencyKillSwitch: false,
 }
 
@@ -207,9 +207,7 @@ export function checkCostLimit(
 /**
  * Check if the current time is within the agent's active hours (IST).
  */
-export function checkTimeWindow(
-  config: SafetyConfig = DEFAULT_SAFETY_CONFIG
-): SafetyCheckResult {
+export function checkTimeWindow(config: SafetyConfig = DEFAULT_SAFETY_CONFIG): SafetyCheckResult {
   // Get current hour in IST (UTC+5:30)
   const now = new Date()
   const istOffset = 5.5 * 60 * 60 * 1000
@@ -248,7 +246,10 @@ export function checkKillSwitch(userId: string): SafetyCheckResult {
  * Run ALL safety checks for an agent iteration.
  * Returns the first blocking violation, or OK if all pass.
  */
-export function runSafetyChecks(state: SafetyState, config: SafetyConfig = DEFAULT_SAFETY_CONFIG): SafetyCheckResult {
+export function runSafetyChecks(
+  state: SafetyState,
+  config: SafetyConfig = DEFAULT_SAFETY_CONFIG
+): SafetyCheckResult {
   // 1. Kill switch (highest priority)
   const killCheck = checkKillSwitch(state.userId)
   if (!killCheck.allowed) return killCheck

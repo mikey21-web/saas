@@ -19,7 +19,10 @@ export interface Contact {
 }
 
 export class ConsentError extends Error {
-  constructor(public channel: ConsentType, public contactId: string) {
+  constructor(
+    public channel: ConsentType,
+    public contactId: string
+  ) {
     super(`DND_BLOCKED: Contact ${contactId} has not consented to ${channel} messages`)
     this.name = 'ConsentError'
   }

@@ -1,6 +1,5 @@
-import { RedirectToSignUp } from "@clerk/nextjs";
+import { redirect } from 'next/navigation'
 
 export default function CallbackPage() {
-  // This page handles post-sign-up redirects
-  return <RedirectToSignUp />;
+  redirect('/sign-in')
 }

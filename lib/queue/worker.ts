@@ -55,8 +55,8 @@ async function processAgentJob(job: Job<AgentJobData>): Promise<AgentJobResult> 
 
     console.log(
       `[Worker] Job ${job.id} completed — success: ${executionResult.success}, ` +
-      `iterations: ${executionResult.iterationCount}, tools: ${executionResult.toolCallsCount}, ` +
-      `cost: ₹${executionResult.totalCostINR.toFixed(2)}, duration: ${executionResult.durationMs}ms`
+        `iterations: ${executionResult.iterationCount}, tools: ${executionResult.toolCallsCount}, ` +
+        `cost: ₹${executionResult.totalCostINR.toFixed(2)}, duration: ${executionResult.durationMs}ms`
     )
 
     if (executionResult.needsEscalation) {
@@ -88,25 +88,21 @@ export function createAgentWorker(): Worker<AgentJobData, AgentJobResult> {
     return workerInstance
   }
 
-  const worker = new Worker<AgentJobData, AgentJobResult>(
-    AGENT_QUEUE_NAME,
-    processAgentJob,
-    {
-      connection: getRedisConnection(),
-      concurrency: parseInt(process.env.WORKER_CONCURRENCY || '5', 10),
-      limiter: {
-        max: 100,
-        duration: 60_000, // 100 jobs per minute max
-      },
-      removeOnComplete: {
-        age: 86_400, // Keep completed jobs for 24 hours
-        count: 1000,  // Keep last 1000 completed jobs
-      },
-      removeOnFail: {
-        age: 604_800, // Keep failed jobs for 7 days
-      },
-    }
-  )
+  const worker = new Worker<AgentJobData, AgentJobResult>(AGENT_QUEUE_NAME, processAgentJob, {
+    connection: getRedisConnection(),
+    concurrency: parseInt(process.env.WORKER_CONCURRENCY || '5', 10),
+    limiter: {
+      max: 100,
+      duration: 60_000, // 100 jobs per minute max
+    },
+    removeOnComplete: {
+      age: 86_400, // Keep completed jobs for 24 hours
+      count: 1000, // Keep last 1000 completed jobs
+    },
+    removeOnFail: {
+      age: 604_800, // Keep failed jobs for 7 days
+    },
+  })
 
   // ─── Event Handlers ──────────────────────────────────────────────────
 
