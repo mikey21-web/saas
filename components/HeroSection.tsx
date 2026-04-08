@@ -2,6 +2,8 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
+import WaitlistForm from "./WaitlistForm"
+
 export default function HeroSection() {
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-gradient-to-b from-white via-gray-50 to-white">
@@ -43,18 +45,21 @@ export default function HeroSection() {
             <span className="text-gray-400">to operational leakage</span>
           </motion.h1>
 
-          {/* Subheadline */}
-          <motion.p
-            className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-gray-600 mb-10"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            AI agents that handle tasks, follow up on leads, prevent no-shows, 
-            and automate billing — while you focus on growth.
-          </motion.p>
+           {/* Subheadline */}
+           <motion.p
+             className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-gray-600 mb-10"
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.6, delay: 0.2 }}
+           >
+             AI agents that handle tasks, follow up on leads, prevent no-shows, 
+             and automate billing — while you focus on growth.
+           </motion.p>
 
-          {/* CTA Buttons */}
+           {/* Waitlist Form */}
+           <WaitlistForm />
+
+           {/* CTA Buttons */}
           <motion.div
             className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16"
             initial={{ opacity: 0, y: 20 }}
