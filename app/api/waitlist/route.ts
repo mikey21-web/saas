@@ -4,6 +4,8 @@ import path from 'path';
 
 const WAITLIST_FILE = path.join(process.cwd(), 'waitlist-emails.json');
 
+
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();

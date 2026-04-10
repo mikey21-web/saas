@@ -1,4 +1,4 @@
-import { Bot, Twitter, Linkedin, Mail } from 'lucide-react'
+import { Bot, Mail, Link, Share2 } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -95,11 +95,11 @@ export default function Footer() {
         <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 text-sm">© 2026 Diyaa.ai. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <a href="#" className="text-gray-400 hover:text-coral-500 transition-colors">
-              <Twitter className="w-5 h-5" />
+            <a href="https://x.com" className="text-gray-400 hover:text-coral-500 transition-colors" title="X (Twitter)">
+              <Link className="w-5 h-5" />
             </a>
-            <a href="#" className="text-gray-400 hover:text-coral-500 transition-colors">
-              <Linkedin className="w-5 h-5" />
+            <a href="https://linkedin.com" className="text-gray-400 hover:text-coral-500 transition-colors" title="LinkedIn">
+              <Share2 className="w-5 h-5" />
             </a>
             <a href="#" className="text-gray-400 hover:text-coral-500 transition-colors">
               <Mail className="w-5 h-5" />

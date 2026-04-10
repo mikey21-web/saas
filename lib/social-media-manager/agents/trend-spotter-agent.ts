@@ -25,9 +25,10 @@ import {
 } from '../utils';
 import {
   groqChatJSON,
-  twitterGetTrends,
   fetchGoogleTrends,
   fetchInstagramTrendingAudio,
+  fetchNitterTrends,
+  fetchRedditTrends,
   supabaseGetActiveUsers,
   supabaseGetNKP,
   supabaseSaveTrendScan,
@@ -49,17 +50,18 @@ interface ScoredTrend {
  * Fetch all trend sources in parallel
  */
 async function fetchAllTrends(): Promise<{
-  twitter: TrendTopic[];
+  nitter: TrendTopic[];
+  reddit: TrendTopic[];
   google: TrendTopic[];
   instagramAudio: TrendingAudio[];
 }> {
-  const [twitter, google, instagramAudio] = await Promise.all([
-    twitterGetTrends(23424848), // India WOEID
+  const [nitter, reddit, google, instagramAudio] = await Promise.all([
+    fetchNitterTrends(),
+    fetchRedditTrends(),
     fetchGoogleTrends(),
     fetchInstagramTrendingAudio(),
   ]);
-  
-  return { twitter, google, instagramAudio };
+  return { nitter, reddit, google, instagramAudio };
 }
 
 /**
@@ -182,11 +184,12 @@ export async function trendSpotterAgent(
     
     // 4. Fetch trends from all sources
     const rawTrends = await fetchAllTrends();
-    
+
     // 5. Score trend relevance per niche
     const scoredTrends = await scoreTrendRelevance(
       {
-        twitter: rawTrends.twitter,
+        nitter: rawTrends.nitter,
+        reddit: rawTrends.reddit,
         google: rawTrends.google,
         audio: rawTrends.instagramAudio,
       },
@@ -211,16 +214,17 @@ export async function trendSpotterAgent(
     for (const [niche, trends] of Object.entries(scoredTrends)) {
       scoredTrendsConverted[niche] = trends.map(t => ({
         name: t.trend,
-        source: 'twitter' as const,
+        source: t.source || 'nitter',
         relevance_score: t.relevance_score,
         content_angle: t.content_angle,
       }));
     }
-    
+
     const scan: TrendScan = {
       scan_id: generateScanId(),
       scanned_at: new Date(),
-      twitter_topics: rawTrends.twitter,
+      nitter_topics: rawTrends.nitter,
+      reddit_topics: rawTrends.reddit,
       google_topics: rawTrends.google,
       instagram_audio: rawTrends.instagramAudio,
       tiktok_audio: [], // TikTok trending not implemented
@@ -277,11 +281,15 @@ export async function trendSpotterAgent(
           scan_id: scan.scan_id,
           scanned_at: scan.scanned_at,
           niche_id: nicheArray[0] || 'all',
-          topics: [...scan.twitter_topics, ...scan.google_topics],
+          topics: [
+            ...(scan.nitter_topics || []),
+            ...(scan.reddit_topics || []),
+            ...(scan.google_topics || []),
+          ],
           audio: scan.instagram_audio,
           high_relevance: highRelevanceTrends.map(h => ({
             name: h.trend.trend,
-            source: 'twitter' as const,
+            source: h.trend.source || 'nitter',
             relevance_score: h.trend.relevance_score,
             content_angle: h.trend.content_angle,
           })),

@@ -83,13 +83,23 @@ async function getOrCreateSupabaseUser(
 ): Promise<string> {
   const supabase = supabaseAdmin
 
+  // Look up by clerk_id column (stores our "google:uuid" / "jwt:email" external ID)
   const { data: existingUser } = await (supabase.from('users') as any)
     .select('id')
     .eq('clerk_id', externalUserId)
-    .single()
+    .maybeSingle()
 
   if (existingUser?.id) return existingUser.id
 
+  // Also check by email in case user was created via a different flow
+  const { data: byEmail } = await (supabase.from('users') as any)
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (byEmail?.id) return byEmail.id
+
+  // Create new — let Postgres auto-generate the UUID id
   const { data: createdUser, error } = await (supabase.from('users') as any)
     .insert({
       clerk_id: externalUserId,
@@ -111,12 +121,25 @@ export async function resolveAuthIdentity(req: NextRequest): Promise<AuthIdentit
   const xUserId = req.headers.get('x-user-id')
   const xUserEmail = req.headers.get('x-user-email')
   const xUserName = req.headers.get('x-user-name')
+  // API routes are excluded from proxy middleware, so read the cookie directly
+  const cookieToken = req.cookies.get('auth_token')?.value
 
   let externalUserId: string | null = null
   let email: string | null = null
   let name: string | undefined
 
-  if (authHeader?.startsWith('Bearer ')) {
+  // 1. Try cookie token (Google OAuth / new auth flow)
+  if (cookieToken) {
+    const payload = verifySessionToken(cookieToken)
+    if (payload) {
+      externalUserId = payload.sub
+      email = payload.email
+      name = payload.name
+    }
+  }
+
+  // 2. Try Bearer token (localStorage / dev login)
+  if (!externalUserId && authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7)
     const payload = verifySessionToken(token)
     if (payload) {
@@ -126,6 +149,7 @@ export async function resolveAuthIdentity(req: NextRequest): Promise<AuthIdentit
     }
   }
 
+  // 3. Try middleware-forwarded headers (legacy path)
   if (!externalUserId && xUserId) {
     externalUserId = xUserId
     email = xUserEmail || `${xUserId}@placeholder.diyaa.ai`

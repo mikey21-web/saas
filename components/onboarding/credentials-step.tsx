@@ -108,7 +108,7 @@ export default function CredentialsStep({
                   : validations.whatsapp_number?.valid === false
                     ? '#ef4444'
                     : 'rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.05)',
+              background: 'rgba(255,255,255,0.15)',
               color: '#f0eff0',
               pointerEvents: 'auto',
               cursor: 'text',
@@ -158,7 +158,7 @@ export default function CredentialsStep({
                   : validations.website_url?.valid === false
                     ? '#ef4444'
                     : 'rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.05)',
+              background: 'rgba(255,255,255,0.15)',
               color: '#f0eff0',
               pointerEvents: 'auto',
               cursor: 'text',
@@ -259,7 +259,7 @@ export default function CredentialsStep({
                       : validations.openai_api_key?.valid === false
                         ? '#ef4444'
                         : 'rgba(255,255,255,0.1)',
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'rgba(255,255,255,0.15)',
                   color: '#f0eff0',
                 }}
               />
@@ -301,7 +301,7 @@ export default function CredentialsStep({
                       : validations.groq_api_key?.valid === false
                         ? '#ef4444'
                         : 'rgba(255,255,255,0.1)',
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'rgba(255,255,255,0.15)',
                   color: '#f0eff0',
                 }}
               />

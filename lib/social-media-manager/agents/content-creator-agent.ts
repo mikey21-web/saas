@@ -37,6 +37,8 @@ import {
   supabaseCreatePost,
   supabaseGetNKP,
   supabaseGetUser,
+  replicateGenerateImage,
+  optimizeImagePrompt,
 } from '../integrations';
 
 // =============================================================================
@@ -176,6 +178,7 @@ export async function contentCreatorAgent(
   const posts: Post[] = [];
   const imagePrompts: string[] = [];
   const errors: string[] = [];
+  const warnings: string[] = [];
   
   for (const platform of input.platforms_requested) {
     // Determine content type for this platform
@@ -235,6 +238,23 @@ export async function contentCreatorAgent(
         const savedPost = await supabaseCreatePost(post);
         if (savedPost) {
           posts.push(savedPost);
+
+          // Generate image if prompt provided
+          if (content.image_prompt && contentType !== 'reel' && contentType !== 'shorts') {
+            try {
+              const optimized = optimizeImagePrompt(content.image_prompt, platform as any);
+              const mediaUrl = await replicateGenerateImage(optimized);
+
+              if (mediaUrl) {
+                savedPost.media_url = mediaUrl;
+                // Update post with generated image URL
+                await supabaseCreatePost({ ...savedPost, media_url: mediaUrl });
+              }
+            } catch (imgError) {
+              warnings.push(`Image generation failed for ${platform}: ${imgError}`);
+            }
+          }
+
           if (content.image_prompt) {
             imagePrompts.push(content.image_prompt);
           }
@@ -260,7 +280,11 @@ export async function contentCreatorAgent(
     posts: [...state.posts, ...posts],
     content_creator_output: output,
     errors: [...state.errors, ...errors],
-    warnings: errors.length > 0 ? [...state.warnings, `${errors.length} content generation errors`] : state.warnings,
+    warnings: [
+      ...state.warnings,
+      ...(errors.length > 0 ? [`${errors.length} content generation errors`] : []),
+      ...warnings
+    ],
     current_step: 'content_creator_complete',
     next_step: user.approval_required ? 'approval' : 'scheduler',
   };

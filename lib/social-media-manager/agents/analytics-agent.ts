@@ -240,7 +240,20 @@ async function generateUserReport(
   const now = new Date();
   const periodStart = new Date(now);
   periodStart.setDate(periodStart.getDate() - periodDays);
-  
+
+  // Feedback loop: update NKP with new insights if available
+  if (aiInsights && aiInsights.length > 0 && user.niche_primary) {
+    // Example: update NKP with new best posting time or content angle
+    const bestInsight = aiInsights[0];
+    // This is a placeholder; adapt to your NKP schema and insight structure
+    await import('../integrations').then(({ supabaseUpdateNKP }) => {
+      supabaseUpdateNKP(user.niche_primary, {
+        last_insight: bestInsight.summary || JSON.stringify(bestInsight),
+        updated_at: new Date().toISOString(),
+      });
+    });
+  }
+
   const report: AnalyticsReport = {
     id: generateId('report'),
     user_id: user.id,
@@ -260,7 +273,7 @@ async function generateUserReport(
     ai_insights: aiInsights,
     created_at: now,
   };
-  
+
   return report;
 }
 

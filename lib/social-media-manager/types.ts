@@ -16,6 +16,32 @@
 
 export type Platform = 'instagram' | 'facebook' | 'linkedin' | 'tiktok' | 'twitter';
 
+// =============================================================================
+// COMPETITOR TRACKING TYPES
+// =============================================================================
+
+export interface CompetitorProfile {
+  id: string;
+  name: string;
+  platform: Platform;
+  handle: string;
+  url: string;
+  followers: number;
+  posts_count: number;
+  engagement_rate: number;
+  last_checked: Date;
+}
+
+export interface CompetitorReport {
+  id: string;
+  user_id: string;
+  agent_id: string;
+  created_at: Date;
+  competitors: CompetitorProfile[];
+  summary: string;
+  insights: string[];
+}
+
 export type ContentType = 'post' | 'reel' | 'shorts' | 'carousel' | 'story';
 
 export type PostStatus = 
@@ -159,7 +185,7 @@ export interface NicheKnowledgePack {
 
 export interface TrendTopic {
   name: string;
-  source: 'twitter' | 'google' | 'instagram';
+  source: 'twitter' | 'google' | 'instagram' | 'nitter' | 'reddit';
   tweet_volume?: number;
   url?: string;
   relevance_score: number;
@@ -187,13 +213,29 @@ export interface Trend {
 export interface TrendScan {
   scan_id: string;
   scanned_at: Date;
-  twitter_topics: TrendTopic[];
+  nitter_topics?: TrendTopic[];
+  reddit_topics?: TrendTopic[];
+  twitter_topics?: TrendTopic[];
   google_topics: TrendTopic[];
   instagram_audio: TrendingAudio[];
   tiktok_audio: TrendingAudio[];
   scored_trends: Record<string, TrendTopic[]>;
   high_relevance_count: number;
 }
+// =============================================================================
+// COMPETITOR REPORTS TABLE SQL (for Supabase)
+// =============================================================================
+/*
+CREATE TABLE competitor_reports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES users(id),
+  agent_id text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  competitors jsonb NOT NULL,
+  summary text,
+  insights jsonb
+);
+*/
 
 // =============================================================================
 // ANALYTICS TYPES

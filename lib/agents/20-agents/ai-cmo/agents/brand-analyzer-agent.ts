@@ -46,6 +46,7 @@ Return ONLY the JSON. No markdown, no explanation.`
       maxTokens: 1000,
     })
 
+    if (!response.content) throw new Error('Empty response from AI')
     const text = response.content.trim()
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('No JSON in response')

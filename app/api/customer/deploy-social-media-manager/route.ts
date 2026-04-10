@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     // ─────────────────────────────────────────────────────────────────────
 
     if (action === 'status') {
-      const { data: agent, error: agentError } = await (supabaseAdmin.from('agents') as any)
+      const { data: agent, error: _agentError } = await (supabaseAdmin.from('agents') as any)
         .select('*')
         .eq('id', `smm-${userId}`)
         .eq('type', 'social_media_manager')

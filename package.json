@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "next lint",
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "test": "jest",
     "test:unit": "jest --testPathPattern=__tests__/unit",

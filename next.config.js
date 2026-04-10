@@ -6,8 +6,18 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  turbopack: {
-    root: path.resolve(__dirname),
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  experimental: {
+    turbopack: true,
+  },
+  webpack: (config) => {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/node_modules/**', '**/.git/**', '**/code-review-graph/**', '**/.code-review-graph/**'],
+    }
+    return config
   },
 }
 

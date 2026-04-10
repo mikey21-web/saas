@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { authFetch } from '@/lib/auth/client'
 import CredentialsModal from '@/components/office/CredentialsModal'
+import ChannelConnections from '@/components/office/ChannelConnections'
 
 interface Message {
   id: string
@@ -447,14 +448,9 @@ export default function AgentOfficePage() {
           </div>
         </nav>
 
-        {/* Channel Status */}
-        <div className="p-4 border-t border-gray-800">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3">Channels</p>
-          <div className="space-y-2">
-            <ChannelStatus icon={MessageSquare} label="WhatsApp" connected={agent?.channels_whatsapp} />
-            <ChannelStatus icon={Mail} label="Email" connected={agent?.channels_email} />
-            <ChannelStatus icon={Phone} label="Voice" connected={agent?.channels_phone} />
-          </div>
+        {/* Channel Connections */}
+        <div className="p-4 border-t border-gray-800 max-h-96 overflow-y-auto">
+          <ChannelConnections agentId={agentId} />
         </div>
       </div>
 
@@ -544,10 +540,13 @@ export default function AgentOfficePage() {
             </div>
           )}
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map((message) => (
+          {/* Content Tabs */}
+          {activeTab === 'chat' && (
+            <>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-3xl mx-auto space-y-6">
+                  {messages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                   {message.role === 'assistant' && (
                     <div className="w-8 h-8 rounded-full bg-coral-500 flex items-center justify-center flex-shrink-0">
@@ -625,41 +624,55 @@ export default function AgentOfficePage() {
             </div>
           )}
 
-          {/* Input Area */}
-          <div className="p-4 bg-white border-t border-gray-200">
-            <div className="max-w-3xl mx-auto">
-              {sendingError && (
-                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
-                  {sendingError}
-                </div>
-              )}
-              <div className="flex items-end gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 focus-within:border-coral-500 focus-within:ring-2 focus-within:ring-coral-500/20 transition-all">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={`Message ${displayName}...`}
-                  className="flex-1 py-2 px-2 bg-transparent outline-none resize-none text-sm text-gray-900 placeholder-gray-400 min-h-[24px] max-h-32"
-                  rows={1}
-                  disabled={isTyping}
-                />
-                <div className="flex items-center gap-1">
-                  <button className="p-2 rounded-lg hover:bg-gray-200 text-gray-400 transition-colors" title="Voice input">
-                    <Mic className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={sendMessage}
-                    disabled={!input.trim() || isTyping}
-                    className="p-2 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 text-white rounded-lg transition-colors"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
+              {/* Input Area */}
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="max-w-3xl mx-auto">
+                  {sendingError && (
+                    <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+                      {sendingError}
+                    </div>
+                  )}
+                  <div className="flex items-end gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2 focus-within:border-coral-500 focus-within:ring-2 focus-within:ring-coral-500/20 transition-all">
+                    <textarea
+                      ref={textareaRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder={`Message ${displayName}...`}
+                      className="flex-1 py-2 px-2 bg-transparent outline-none resize-none text-sm text-gray-900 placeholder-gray-400 min-h-[24px] max-h-32"
+                      rows={1}
+                      disabled={isTyping}
+                    />
+                    <div className="flex items-center gap-1">
+                      <button className="p-2 rounded-lg hover:bg-gray-200 text-gray-400 transition-colors" title="Voice input">
+                        <Mic className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={sendMessage}
+                        disabled={!input.trim() || isTyping}
+                        className="p-2 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                      >
+                        <Send className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2 text-center">Enter to send · Shift+Enter for new line</p>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-400 mt-2 text-center">Enter to send · Shift+Enter for new line</p>
+            </>
+          )}
+
+          {/* Other Tabs - Placeholder Content */}
+          {activeTab !== 'chat' && (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {activeTab === 'settings' ? 'Settings' : activeTab === 'sequences' ? 'Sequences' : activeTab === 'inbox' ? 'Agent Inbox' : activeTab === 'dashboard' ? 'Analytics' : activeTab === 'contacts' ? 'Contacts' : activeTab === 'researcher' ? 'Researcher' : 'Tab'}
+                </h3>
+                <p className="text-gray-500">Feature coming soon</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Activity Column (Desktop) */}
